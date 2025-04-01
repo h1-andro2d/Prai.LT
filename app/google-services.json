@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "363290190285",
+    "project_id": "prai-api",
+    "storage_bucket": "prai-api.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:363290190285:android:e430a3714074ad10be6484",
+        "android_client_info": {
+          "package_name": "com.prai.te"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "363290190285-ert394nbmm6t47h6jrsu92timto8j1ts.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.prai.te",
+            "certificate_hash": "402f186583003556486ccd4af78431728596f58b"
+          }
+        },
+        {
+          "client_id": "363290190285-i3jauveemc03hjhf2on2kv0dv624co11.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALepnX-ntzKePYvjGSJZ8oXDzAbRWjM3Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "363290190285-i3jauveemc03hjhf2on2kv0dv624co11.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
