@@ -30,6 +30,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,17 +60,27 @@ import com.prai.te.common.clearFocusCleanClickable
 import com.prai.te.common.clearFocusRippleClickable
 import com.prai.te.common.rippleClickable
 import com.prai.te.view.common.MainSaveButton
+import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
 import com.prai.te.view.model.UserGender
 
 @Preview
 @Composable
-internal fun MainProfileSettingView(model: MainViewModel = viewModel()) {
-    val initialTime = model.selectedBirthDateMills.collectAsStateWithLifecycle()
+internal fun MainProfileSettingView(
+    model: MainViewModel = viewModel(),
+    repository: MainRepositoryViewModel = viewModel()
+) {
     var showPicker by remember { mutableStateOf(false) }
-    var selectedDateText = model.selectedBirthDateMills.collectAsStateWithLifecycle()
+    var selectedData = repository.selectedBirthDateMills.collectAsStateWithLifecycle()
 
-    BackHandler { model.isProfileSettingVisible.value = false }
+    BackHandler {
+        model.isProfileSettingVisible.value = false
+        repository.rollbackProfileSetting()
+    }
+
+    LaunchedEffect(Unit) {
+        repository.makeProfileSettingCache()
+    }
 
     Box(
         modifier = Modifier
@@ -88,6 +99,7 @@ internal fun MainProfileSettingView(model: MainViewModel = viewModel()) {
                 modifier = Modifier
                     .clearFocusCleanClickable(lazy = false) {
                         model.isProfileSettingVisible.value = false
+                        repository.rollbackProfileSetting()
                     }
                     .align(Alignment.CenterStart)
                     .padding(start = 20.dp)
@@ -118,7 +130,7 @@ internal fun MainProfileSettingView(model: MainViewModel = viewModel()) {
             item { CategoryText("생년월일") }
             item { VerticalGap(16) }
             item {
-                BorderText(MainTimeUtil.brithMillsToString(selectedDateText.value)) {
+                BorderText(MainTimeUtil.brithMillsToString(selectedData.value)) {
                     showPicker = true
                 }
             }
@@ -126,15 +138,18 @@ internal fun MainProfileSettingView(model: MainViewModel = viewModel()) {
         MainSaveButton(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .clearFocusCleanClickable { model.isProfileSettingVisible.value = false }
+                .clearFocusCleanClickable {
+                    model.isProfileSettingVisible.value = false
+                    repository.saveProfileSetting()
+                }
         )
     }
 
     if (showPicker) {
         DatePickerModal(
-            initialTime = initialTime.value,
+            initialTime = selectedData.value,
             onDateSelected = { dateMillis ->
-                model.selectedBirthDateMills.value = dateMillis
+                repository.selectedBirthDateMills.value = dateMillis
             },
             onDismiss = {
                 showPicker = false
@@ -174,22 +189,22 @@ private fun BorderText(text: String = "NAMENAME", onClick: () -> Unit) {
             .fillMaxWidth()
             .background(color = MainColor.Greyscale02BK, shape = RoundedCornerShape(size = 10.dp))
             .clipToBounds()
-            .rippleClickable { onClick.invoke() }
+            .clearFocusRippleClickable() { onClick.invoke() }
             .padding(horizontal = 16.dp, vertical = 20.dp)
     )
 }
 
 @Preview
 @Composable
-private fun BorderEditText(model: MainViewModel = viewModel()) {
-    val nameText = model.nameText.collectAsStateWithLifecycle()
+private fun BorderEditText(repository: MainRepositoryViewModel = viewModel()) {
+    val nameText = repository.nameText.collectAsStateWithLifecycle()
     val controller = LocalSoftwareKeyboardController.current
 
     TextField(
         value = nameText.value,
         onValueChange = { new ->
             if (new.length <= 20) {
-                model.nameText.value = new
+                repository.nameText.value = new
             }
         },
         modifier = Modifier
@@ -249,9 +264,9 @@ private fun BorderEditText(model: MainViewModel = viewModel()) {
 }
 
 @Composable
-internal fun GenderSelection(model: MainViewModel = viewModel()) {
+internal fun GenderSelection(repository: MainRepositoryViewModel = viewModel()) {
     val genders = listOf(UserGender.MALE, UserGender.FEMALE)
-    val selected = model.selectedGender.collectAsStateWithLifecycle()
+    val selected = repository.selectedGender.collectAsStateWithLifecycle()
 
     Row(
         modifier = Modifier
@@ -293,7 +308,7 @@ internal fun GenderSelection(model: MainViewModel = viewModel()) {
                 borderColor = animatedBorderColor,
                 bgColor = animatedBackgroundColor,
                 onClick = {
-                    model.selectedGender.value = it
+                    repository.selectedGender.value = it
                 },
                 modifier = Modifier.weight(1f)
             )

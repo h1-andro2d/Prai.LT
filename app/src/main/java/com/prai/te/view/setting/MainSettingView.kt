@@ -2,7 +2,6 @@ package com.prai.te.view.setting
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
@@ -41,15 +41,18 @@ import com.prai.te.common.MainTimeUtil
 import com.prai.te.common.VerticalGap
 import com.prai.te.common.cleanClickable
 import com.prai.te.common.rippleClickable
+import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
-import androidx.core.net.toUri
 
 @Preview
 @Composable
-internal fun MainSettingView(model: MainViewModel = viewModel()) {
-    val gender = model.selectedGender.collectAsStateWithLifecycle()
-    val nameText = model.nameText.collectAsStateWithLifecycle()
-    val birthDateText = model.selectedBirthDateMills.collectAsStateWithLifecycle()
+internal fun MainSettingView(
+    model: MainViewModel = viewModel(),
+    repository: MainRepositoryViewModel = viewModel()
+) {
+    val gender = repository.selectedGender.collectAsStateWithLifecycle()
+    val nameText = repository.nameText.collectAsStateWithLifecycle()
+    val birthDateText = repository.selectedBirthDateMills.collectAsStateWithLifecycle()
 
     val infoText = if (birthDateText.value != null) {
         "${gender.value.text} / ${MainTimeUtil.brithMillsToString(birthDateText.value)}"
@@ -175,13 +178,22 @@ private fun ItemBox() {
             .background(color = MainColor.Greyscale02BK, shape = RoundedCornerShape(size = 16.dp))
     ) {
         SettingItem(R.drawable.main_setting_ask, "문의하기") {
-            startWebView(context, "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180e0af33e9fc1fdbd475")
+            startWebView(
+                context,
+                "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180e0af33e9fc1fdbd475"
+            )
         }
         SettingItem(R.drawable.main_seeing_rule, "이용약관") {
-            startWebView(context, "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d01800f8961cb4ce9e9cc0f")
+            startWebView(
+                context,
+                "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d01800f8961cb4ce9e9cc0f"
+            )
         }
         SettingItem(R.drawable.main_setting_privacy, "개인정보처리방침") {
-            startWebView(context, "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180028c83e03d26aeceb6")
+            startWebView(
+                context,
+                "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180028c83e03d26aeceb6"
+            )
         }
     }
 }

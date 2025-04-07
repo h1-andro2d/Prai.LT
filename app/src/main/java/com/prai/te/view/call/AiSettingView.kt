@@ -26,6 +26,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,9 +52,17 @@ import com.prai.te.view.model.MainViewModel
 
 @Preview
 @Composable
-internal fun AiSettingView(model: MainViewModel = viewModel()) {
+internal fun AiSettingView(
+    model: MainViewModel = viewModel(),
+    repository: MainRepositoryViewModel = viewModel()
+) {
     BackHandler {
         model.isAiSettingVisible.value = false
+        repository.rollbackAiSetting()
+    }
+
+    LaunchedEffect(Unit) {
+        repository.makeAiSettingCache()
     }
 
     Box(
@@ -93,7 +102,10 @@ internal fun AiSettingView(model: MainViewModel = viewModel()) {
             painter = painterResource(R.drawable.main_setting_x),
             contentDescription = null,
             modifier = Modifier
-                .cleanClickable { model.isAiSettingVisible.value = false }
+                .cleanClickable {
+                    model.isAiSettingVisible.value = false
+                    repository.rollbackAiSetting()
+                }
                 .padding(top = 22.dp, end = 20.dp)
                 .align(Alignment.TopEnd)
                 .size(22.dp)
@@ -102,7 +114,11 @@ internal fun AiSettingView(model: MainViewModel = viewModel()) {
         MainSaveButton(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .cleanClickable { model.isAiSettingVisible.value = false })
+                .cleanClickable {
+                    model.isAiSettingVisible.value = false
+                    repository.saveCurrentAiSetting()
+                }
+        )
     }
 }
 
