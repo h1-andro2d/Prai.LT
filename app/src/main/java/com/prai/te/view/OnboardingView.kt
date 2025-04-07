@@ -120,19 +120,13 @@ fun GenderRadioButton(text: String, selected: Boolean, onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DatePickerModal(
+private fun DatePickerModal(
     onDateSelected: (Long?) -> Unit,
     onDismiss: () -> Unit
 ) {
     val datePickerState = rememberDatePickerState()
-    val colors = DatePickerDefaults.colors(
-        containerColor = Color.White,
-        selectedDayContainerColor = Color.Blue,
-        todayDateBorderColor = Color.Blue
-    )
 
     DatePickerDialog(
-        colors = colors,
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
@@ -152,7 +146,6 @@ fun DatePickerModal(
         }
     ) {
         DatePicker(
-            colors = colors,
             state = datePickerState
         )
     }

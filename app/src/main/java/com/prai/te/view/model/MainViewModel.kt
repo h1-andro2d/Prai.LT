@@ -6,8 +6,7 @@ import com.prai.te.media.MainPlayer
 import com.prai.te.media.MainVolumeReader
 import com.prai.te.model.MainCallState
 import com.prai.te.model.MainEvent
-import com.prai.te.model.MainVoiceSettingItem
-import com.prai.te.model.MainVibeSettingItem
+import com.prai.te.model.MainTranslationState
 import com.prai.te.retrofit.MainConversationMeta
 import com.prai.te.retrofit.MainConversationResponse
 import com.prai.te.retrofit.MainRetrofit
@@ -22,27 +21,33 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 internal class MainViewModel : ViewModel() {
+    private val conversationFlowMap =
+        mutableMapOf<String, MutableStateFlow<MainConversationResponse?>>()
+
     val event = MutableSharedFlow<MainEvent>()
     val isRecording = MutableStateFlow(false)
-    val speed = MutableStateFlow(0.5f)
     val segmentItemList = MutableStateFlow<List<CallSegmentItem>>(emptyList())
     val callState = MutableStateFlow<MainCallState>(MainCallState.None)
     val isSettingOverlayVisible = MutableStateFlow(false)
+    val isTranslationOverlayVisible = MutableStateFlow(false)
+    val isMainSettingVisible = MutableStateFlow(false)
+    val isProfileSettingVisible = MutableStateFlow(false)
+    val selectedGender = MutableStateFlow(UserGender.MALE)
+    val selectedBirthDateMills = MutableStateFlow<Long?>(1577836800000)
+    val isCallEndingDialog = MutableStateFlow(false)
+    val isServiceEndingDialog = MutableStateFlow(false)
+    val translationState = MutableStateFlow<MainTranslationState>(MainTranslationState.None)
     val isAiSettingVisible = MutableStateFlow(false)
     val callTime = MutableStateFlow(0)
     val recordTime = MutableStateFlow(0)
     val currentSegment = MutableStateFlow<CallSegmentItem?>(null)
     val notification = MutableStateFlow<String?>(null)
+    val nameText = MutableStateFlow<String>("PRAI")
     val volumeLevel = MutableStateFlow(0.1f)
     val isConversationListVisible = MutableStateFlow(false)
     val chatList = MutableStateFlow<List<MainConversationMeta>>(emptyList())
-
-    val selectedVoiceSettingItem = MutableStateFlow(MainVoiceSettingItem.FEMALE_1)
-    val selectedVibeSettingItem = MutableStateFlow(MainVibeSettingItem.FRIENDLY)
+    val callResponseWaiting = MutableStateFlow(false)
     val selectedConversationId = MutableStateFlow<String?>(null)
-
-    private val conversationFlowMap =
-        mutableMapOf<String, MutableStateFlow<MainConversationResponse?>>()
 
     private var callTimer: Timer? = null
         set(value) {
@@ -70,6 +75,22 @@ internal class MainViewModel : ViewModel() {
         when (event) {
             is MainRetrofit.Event.CallResponse -> {
 
+            }
+
+            is MainRetrofit.Event.CallResponseError -> {
+                callResponseWaiting.value = false
+            }
+
+            is MainRetrofit.Event.TranslationResponse -> {
+                val state = translationState.value
+                if (state is MainTranslationState.Requested &&
+                    state.originalText == event.originalText
+                ) {
+                    translationState.value = MainTranslationState.Done(
+                        state.originalText,
+                        event.response.translation
+                    )
+                }
             }
 
             is MainRetrofit.Event.ConversationResponse -> {
@@ -129,7 +150,16 @@ internal class MainViewModel : ViewModel() {
         stopCallTimer()
         callState.value = MainCallState.None
         initializeData()
+        isCallEndingDialog.value = false
         viewModelScope.launch { event.emit(MainEvent.CallEnd) }
+    }
+
+    fun onServiceEnd() {
+        stopCallTimer()
+        callState.value = MainCallState.None
+        initializeData()
+        isServiceEndingDialog.value = false
+        viewModelScope.launch { event.emit(MainEvent.ServiceEnd) }
     }
 
     fun startRecording() {
@@ -167,11 +197,39 @@ internal class MainViewModel : ViewModel() {
         }
     }
 
+    fun onTranslationStart() {
+        if (segmentItemList.value.isEmpty()) {
+            return
+        }
+        val textList = segmentItemList.value.map { it.text }
+        val text = textList.joinToString(separator = " ").trim()
+        if (text.isEmpty()) {
+            return
+        }
+        val state = translationState.value
+        isTranslationOverlayVisible.value = true
+        if (state is MainTranslationState.Done && state.originalText == text) {
+            return
+        }
+        if (state is MainTranslationState.Requested && state.originalText == text) {
+            return
+        }
+        translationState.value = MainTranslationState.Requested(text)
+        viewModelScope.launch { event.emit(MainEvent.TranslationRequest(text)) }
+    }
+
     private fun initializeData() {
         currentSegment.value = null
         isRecording.value = false
         isAiSettingVisible.value = false
+        isCallEndingDialog.value = false
         isSettingOverlayVisible.value = false
+        isTranslationOverlayVisible.value = false
+        isConversationListVisible.value = false
+        isProfileSettingVisible.value = false
+        isMainSettingVisible.value = false
+        translationState.value = MainTranslationState.None
+        volumeLevel.value = 0.1f
         segmentItemList.value = emptyList()
     }
 

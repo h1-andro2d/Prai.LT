@@ -58,6 +58,7 @@ internal class MainRecorder(private val scope: CoroutineScope) {
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setOutputFile(path)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioEncodingBitRate(32000)
                 prepare()
             }
         } catch (exception: Exception) {

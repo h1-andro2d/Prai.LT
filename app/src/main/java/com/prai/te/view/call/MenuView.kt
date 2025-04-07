@@ -1,5 +1,6 @@
 package com.prai.te.view.call
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.LinearEasing
@@ -46,14 +47,15 @@ import com.prai.te.view.model.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
+@Preview
 @Composable
 internal fun MenuRowView(
-    isRecording: Boolean,
-    state: MainCallState,
-    modifier: Modifier,
+    isRecording: Boolean = true,
+    state: MainCallState = MainCallState.Active("test"),
+    modifier: Modifier = Modifier,
     model: MainViewModel = viewModel()
 ) {
-    val callIconSize = 97.dp
+    val callIconSize = 92.dp
     val callIconRootSize = 110.dp
 
     val micIconSize = 90.dp
@@ -82,14 +84,16 @@ internal fun MenuRowView(
             label = "menu_row_cross_fade",
             modifier = Modifier.align(Alignment.Center)
         ) { state ->
-            when (state) {
-                is MainCallState.Connecting -> Unit
-                is MainCallState.None -> CallIconWithAnimation(callIconSize, callIconRootSize)
-                is MainCallState.Active -> MicIconWithAnimation(
-                    isRecording,
-                    micIconSize,
-                    micIconRootSize
-                )
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(callIconRootSize)) {
+                when (state) {
+                    is MainCallState.Connecting -> Unit
+                    is MainCallState.None -> CallIconWithAnimation(callIconSize, callIconRootSize)
+                    is MainCallState.Active -> MicIconWithAnimation(
+                        isRecording,
+                        micIconSize,
+                        micIconRootSize
+                    )
+                }
             }
         }
         FadeView(
@@ -135,6 +139,10 @@ internal fun MenuRowView(
 
 @Composable
 internal fun MenuOverlayView(model: MainViewModel = viewModel()) {
+    BackHandler {
+        model.isSettingOverlayVisible.value = false
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -148,11 +156,11 @@ internal fun MenuOverlayView(model: MainViewModel = viewModel()) {
                 .align(Alignment.BottomEnd)
         ) {
             OverlayTextIcon(text = "번역하기", painterResourceId = R.drawable.main_button_translate) {
-
+                model.onTranslationStart()
             }
             OverlayTextIcon(text = "통화 종료", painterResourceId = R.drawable.main_button_end) {
                 model.isSettingOverlayVisible.value = false
-                model.onCallEnd()
+                model.isCallEndingDialog.value = true
             }
             Image(
                 painter = painterResource(R.drawable.main_button_x),
@@ -269,16 +277,17 @@ private fun CallIconWithAnimation(iconSize: Dp, rootSize: Dp, model: MainViewMod
     )
     LaunchedEffect(Unit) {
         while (isActive) {
-            sizeState.value = iconSize - 2.dp
+            sizeState.value = iconSize - 1.dp
             delay(duration)
             sizeState.value = rootSize
             delay(duration)
         }
     }
     Box(contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier
-            .cleanClickable { model.onCallStart() }
-            .size(rootSize)
+        Canvas(
+            modifier = Modifier
+                .cleanClickable { model.onCallStart() }
+                .size(rootSize)
         ) {
             drawCircle(
                 color = Color(0xFF242D28),

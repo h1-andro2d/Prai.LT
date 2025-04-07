@@ -57,6 +57,7 @@ internal class MainRetrofit(coroutineContext: CoroutineContext) {
                 mutableEvent.emit(Event.CallResponse(response))
                 MainLogger.Retrofit.log("sendCallRequest: success: $response")
             } catch (exception: Exception) {
+                mutableEvent.emit(Event.CallResponseError)
                 MainLogger.Retrofit.log("sendCallRequest: exception: $exception")
             }
         }
@@ -86,6 +87,20 @@ internal class MainRetrofit(coroutineContext: CoroutineContext) {
         }
     }
 
+    fun getTranslation(text: String, targetLanguage: String = "Korean") {
+        val request = MainTranslationRequest(text, targetLanguage)
+        scope.launch {
+            try {
+                val response = service.translateText(request)
+                mutableEvent.emit(Event.TranslationResponse(text, response))
+                MainLogger.Retrofit.log("getTranslation: success: ${response.translation}")
+            } catch (exception: Exception) {
+                MainLogger.Retrofit.log("getTranslation: exception: $exception")
+            }
+        }
+    }
+
+
     private fun createService(): MainApiService {
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -105,16 +120,22 @@ internal class MainRetrofit(coroutineContext: CoroutineContext) {
 
     private fun createTtsOption(vibe: String, speed: Float): String {
         val minSpeed = 10f
-        val maxSpeed = 300f
+        val maxSpeed = 200f
         val speedPercent = minSpeed + (maxSpeed - minSpeed) * speed
         return "Speak at ${speedPercent}% of normal speed. Use a $vibe Accent."
     }
 
     sealed interface Event {
         data class CallResponse(val response: MainCallResponse) : Event
+        data object CallResponseError : Event
+
         data class FirstCallResponse(val response: MainFirstCallResponse) : Event
         data class ConversationListResponse(val response: MainConversationListResponse) : Event
         data class ConversationResponse(val response: MainConversationResponse) : Event
+        data class TranslationResponse(
+            val originalText: String,
+            val response: MainTranslationResponse
+        ) : Event
     }
 
     companion object {

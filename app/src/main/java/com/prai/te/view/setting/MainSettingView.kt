@@ -1,0 +1,231 @@
+package com.prai.te.view.setting
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.prai.te.R
+import com.prai.te.common.MainColor
+import com.prai.te.common.MainTimeUtil
+import com.prai.te.common.VerticalGap
+import com.prai.te.common.cleanClickable
+import com.prai.te.common.rippleClickable
+import com.prai.te.view.model.MainViewModel
+import androidx.core.net.toUri
+
+@Preview
+@Composable
+internal fun MainSettingView(model: MainViewModel = viewModel()) {
+    val gender = model.selectedGender.collectAsStateWithLifecycle()
+    val nameText = model.nameText.collectAsStateWithLifecycle()
+    val birthDateText = model.selectedBirthDateMills.collectAsStateWithLifecycle()
+
+    val infoText = if (birthDateText.value != null) {
+        "${gender.value.text} / ${MainTimeUtil.brithMillsToString(birthDateText.value)}"
+    } else {
+        gender.value.text
+    }
+
+    BackHandler { model.isMainSettingVisible.value = false }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color(0xFF000000))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.main_button_back),
+                contentDescription = null,
+                modifier = Modifier
+                    .cleanClickable { model.isMainSettingVisible.value = false }
+                    .align(Alignment.CenterStart)
+                    .padding(start = 20.dp)
+                    .size(24.dp)
+            )
+            Text(
+                text = "마이페이지",
+                fontSize = 18.sp,
+                lineHeight = 25.2.sp,
+                fontWeight = FontWeight(600),
+                color = Color(0xFFFFFFFF),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+        VerticalGap(20)
+        ProfileView()
+        VerticalGap(22)
+        NameText(nameText.value)
+        VerticalGap(3)
+        InfoText(infoText)
+        VerticalGap(30)
+        ItemBox()
+    }
+
+}
+
+@Composable
+private fun ProfileView(model: MainViewModel = viewModel()) {
+    Box(
+        modifier = Modifier
+            .cleanClickable { model.isProfileSettingVisible.value = true }
+            .size(122.dp)
+    ) {
+        Spacer(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .border(width = 1.90164.dp, color = Color(0xFFFFCF31), shape = CircleShape)
+                .padding(1.90164.dp)
+                .width(116.dp)
+                .height(116.dp)
+        )
+        Image(
+            painter = painterResource(id = R.drawable.main_setting_profile),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(100.dp)
+        )
+        Image(
+            painter = painterResource(id = R.drawable.main_setting_edit),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .width(38.dp)
+                .height(38.dp)
+        )
+    }
+}
+
+@Composable
+private fun NameText(text: String) {
+    Text(
+        text = text,
+        fontSize = 18.sp,
+        lineHeight = 25.2.sp,
+        fontWeight = FontWeight(400),
+        color = MainColor.Greyscale20WH,
+    )
+}
+
+@Composable
+private fun InfoText(text: String) {
+    Text(
+        text = text,
+        fontSize = 18.sp,
+        lineHeight = 25.2.sp,
+        fontWeight = FontWeight(400),
+        color = MainColor.Greyscale20WH,
+    )
+}
+
+@Preview
+@Composable
+private fun ItemBox() {
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .clipToBounds()
+            .padding(horizontal = 20.dp)
+            .border(
+                width = 0.5.dp,
+                color = MainColor.OutlineBorder,
+                shape = RoundedCornerShape(size = 16.dp)
+            )
+            .widthIn(max = 500.dp)
+            .fillMaxWidth()
+            .background(color = MainColor.Greyscale02BK, shape = RoundedCornerShape(size = 16.dp))
+    ) {
+        SettingItem(R.drawable.main_setting_ask, "문의하기") {
+            startWebView(context, "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180e0af33e9fc1fdbd475")
+        }
+        SettingItem(R.drawable.main_seeing_rule, "이용약관") {
+            startWebView(context, "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d01800f8961cb4ce9e9cc0f")
+        }
+        SettingItem(R.drawable.main_setting_privacy, "개인정보처리방침") {
+            startWebView(context, "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180028c83e03d26aeceb6")
+        }
+    }
+}
+
+private fun startWebView(context: Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+    context.startActivity(intent)
+}
+
+@Preview
+@Composable
+private fun SettingItem(
+    iconRes: Int = R.drawable.main_button_back,
+    text: String = "문의하기",
+    onClick: () -> Unit = {}
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .rippleClickable { onClick.invoke() }
+            .padding(horizontal = 16.dp, vertical = 20.dp)
+            .fillMaxWidth()
+    ) {
+        Image(
+            painter = painterResource(id = iconRes),
+            contentDescription = null,
+            modifier = Modifier
+                .size(24.dp)
+        )
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            lineHeight = 22.4.sp,
+            fontWeight = FontWeight(400),
+            color = MainColor.Greyscale19WH,
+            modifier = Modifier.padding(start = 9.dp)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Image(
+            painter = painterResource(id = R.drawable.main_button_right_arrow),
+            contentDescription = null,
+            modifier = Modifier
+                .padding(start = 20.dp)
+                .size(24.dp)
+        )
+    }
+}

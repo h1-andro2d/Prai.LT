@@ -1,5 +1,6 @@
 package com.prai.te.view.call
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,13 +42,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.rippleClickable
 import com.prai.te.model.MainVibeSettingItem
 import com.prai.te.model.MainVoiceSettingItem
+import com.prai.te.view.common.MainSaveButton
+import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
 
 @Preview
 @Composable
 internal fun AiSettingView(model: MainViewModel = viewModel()) {
+    BackHandler {
+        model.isAiSettingVisible.value = false
+    }
+
     Box(
         modifier = Modifier
             .padding(top = 20.dp)
@@ -74,7 +82,7 @@ internal fun AiSettingView(model: MainViewModel = viewModel()) {
                     .size(22.dp)
             )
             Text(
-                text = "저장",
+                text = "AI 설정",
                 textAlign = TextAlign.Center,
                 fontSize = 18.sp,
                 color = Color(0xFFFFFFFF),
@@ -91,28 +99,17 @@ internal fun AiSettingView(model: MainViewModel = viewModel()) {
                 .size(22.dp)
         )
         AiSettingGrid(modifier = Modifier.padding(top = 88.dp, bottom = 79.dp))
-        Text(
-            text = "저장",
-            textAlign = TextAlign.Center,
-            fontSize = 18.sp,
-            color = Color(0xFF121212),
-            fontWeight = FontWeight.W600,
+        MainSaveButton(
             modifier = Modifier
-                .padding(vertical = 6.dp, horizontal = 20.dp)
-                .cleanClickable { model.isAiSettingVisible.value = false }
-                .fillMaxWidth()
-                .height(53.dp)
                 .align(Alignment.BottomCenter)
-                .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(60.dp))
-                .padding(vertical = 14.dp)
-        )
+                .cleanClickable { model.isAiSettingVisible.value = false })
     }
 }
 
 @Composable
 internal fun AiSettingGrid(
     modifier: Modifier = Modifier,
-    model: MainViewModel = viewModel()
+    model: MainRepositoryViewModel = viewModel()
 ) {
     val selectedVoiceItem = model.selectedVoiceSettingItem.collectAsStateWithLifecycle()
     val selectedVibeItem = model.selectedVibeSettingItem.collectAsStateWithLifecycle()
@@ -124,7 +121,7 @@ internal fun AiSettingGrid(
     ) {
         item {
             AiSettingGridTitle(
-                text = "속도",
+                text = "목소리",
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
@@ -165,8 +162,8 @@ internal fun AiSettingGrid(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun AiSettingSlider(model: MainViewModel = viewModel()) {
-    val speed = model.speed.collectAsStateWithLifecycle()
+private fun AiSettingSlider(model: MainRepositoryViewModel = viewModel()) {
+    val speed = model.selectedVoiceSpeed.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -177,7 +174,7 @@ private fun AiSettingSlider(model: MainViewModel = viewModel()) {
 
         Slider(
             value = speed.value,
-            onValueChange = { model.speed.value = it },
+            onValueChange = { model.selectedVoiceSpeed.value = it },
             valueRange = 0f..1f,
             thumb = {
                 Spacer(
@@ -214,7 +211,7 @@ private fun AiSettingSlider(model: MainViewModel = viewModel()) {
                 .fillMaxWidth()
         ) {
             Text(
-                text = "빠름",
+                text = "느림",
                 fontSize = 16.sp,
                 lineHeight = 20.8.sp,
                 fontWeight = FontWeight(400),
@@ -228,7 +225,7 @@ private fun AiSettingSlider(model: MainViewModel = viewModel()) {
                 color = Color(0xFFFFFFFF),
             )
             Text(
-                text = "느림",
+                text = "빠름",
                 fontSize = 16.sp,
                 lineHeight = 20.8.sp,
                 fontWeight = FontWeight(400),

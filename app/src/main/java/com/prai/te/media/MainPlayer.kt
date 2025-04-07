@@ -43,6 +43,7 @@ internal class MainPlayer(private val scope: CoroutineScope) {
 
     fun stop() {
         player = null
+        scope.launch { mutableEvent.emit(Event.End) }
     }
 
     fun getDuration(path: String): Long {

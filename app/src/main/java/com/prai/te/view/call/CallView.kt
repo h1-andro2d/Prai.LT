@@ -1,14 +1,21 @@
 package com.prai.te.view.call
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -20,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,23 +35,43 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.prai.te.R
 import com.prai.te.common.FadeView
+import com.prai.te.common.cleanClickable
 import com.prai.te.model.MainCallState
+import com.prai.te.view.AlphaAnimationText
+import com.prai.te.view.LoadingDotAnimation2
+import com.prai.te.view.common.TwoButtonDialog
 import com.prai.te.view.model.MainViewModel
 
 @Composable
 internal fun CallView(model: MainViewModel = viewModel()) {
     val state = model.callState.collectAsStateWithLifecycle()
     val isRecording = model.isRecording.collectAsStateWithLifecycle()
+    val isServiceDialogVisible = model.isServiceEndingDialog.collectAsStateWithLifecycle()
     val isSettingOverlayVisible = model.isSettingOverlayVisible.collectAsStateWithLifecycle()
+    val isCallEndDialog = model.isCallEndingDialog.collectAsStateWithLifecycle()
+    val isTranslationOverlayVisible =
+        model.isTranslationOverlayVisible.collectAsStateWithLifecycle()
     val currentSegment = model.currentSegment.collectAsStateWithLifecycle()
     val isAiSettingVisible = model.isAiSettingVisible.collectAsStateWithLifecycle()
     val isChatListVisible = model.isConversationListVisible.collectAsStateWithLifecycle()
-    val notifiation = model.isAiSettingVisible.collectAsStateWithLifecycle()
+    val callResponseWaiting = model.callResponseWaiting.collectAsStateWithLifecycle()
     val blurEffect = remember {
         android.graphics.RenderEffect
             .createBlurEffect(20f, 20f, android.graphics.Shader.TileMode.DECAL)
             .asComposeRenderEffect()
+    }
+    BackHandler {
+        if (isRecording.value) {
+            model.cancelRecording()
+        } else {
+            if (state.value is MainCallState.None) {
+                model.isServiceEndingDialog.value = true
+            } else {
+                model.isCallEndingDialog.value = true
+            }
+        }
     }
 
     Box(
@@ -51,7 +79,11 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             .windowInsetsPadding(WindowInsets.navigationBars)
             .fillMaxSize()
             .graphicsLayer {
-                renderEffect = if (isSettingOverlayVisible.value) blurEffect else null
+                renderEffect = if (
+                    isSettingOverlayVisible.value ||
+                    isTranslationOverlayVisible.value ||
+                    isCallEndDialog.value
+                ) blurEffect else null
             }
             .background(color = Color(0xFF000000))
     ) {
@@ -85,6 +117,19 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             TimeText()
         }
         FadeView(
+            visible = state.value is MainCallState.None,
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            Image(
+                painter = painterResource(R.drawable.main_button_profile),
+                contentDescription = null,
+                modifier = Modifier
+                    .cleanClickable { model.isMainSettingVisible.value = true }
+                    .padding(top = 10.dp, end = 16.dp)
+                    .size(33.dp)
+            )
+        }
+        FadeView(
             visible = state.value is MainCallState.Active && currentSegment.value != null,
             modifier = Modifier
                 .padding(top = 408.dp)
@@ -115,6 +160,19 @@ internal fun CallView(model: MainViewModel = viewModel()) {
         ) {
             GuideText()
         }
+        AnimatedVisibility(
+            callResponseWaiting.value,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 260.dp),
+            enter = fadeIn(),
+            exit = fadeOut(animationSpec = tween(durationMillis = 0))
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                LoadingDotAnimation2()
+                AlphaAnimationText()
+            }
+        }
         FadeView(
             visible = isRecording.value, modifier = Modifier
                 .padding(bottom = 163.dp)
@@ -127,13 +185,18 @@ internal fun CallView(model: MainViewModel = viewModel()) {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 176.dp)
         )
-        MenuRowView(
-            isRecording = isRecording.value,
-            state = state.value,
+        FadeView(
+            visible = callResponseWaiting.value.not(),
             modifier = Modifier
                 .padding(bottom = 45.dp)
                 .align(Alignment.BottomCenter)
-        )
+        ) {
+            MenuRowView(
+                isRecording = isRecording.value,
+                state = state.value,
+                modifier = Modifier
+            )
+        }
     }
     FadeView(
         visible = isSettingOverlayVisible.value,
@@ -143,12 +206,55 @@ internal fun CallView(model: MainViewModel = viewModel()) {
     ) {
         MenuOverlayView()
     }
+    FadeView(
+        visible = isCallEndDialog.value,
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .fillMaxSize()
+    ) {
+        TwoButtonDialog(
+            titleText = "오늘 대화는 여기까지 할까요?",
+            messageText = "오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.",
+            endButtonText = "종료",
+            cancelButtonText = "취소",
+            onEndClick = {
+                model.onCallEnd()
+            },
+            onCancelClick = { model.isCallEndingDialog.value = false },
+            onBackHandler = { model.isCallEndingDialog.value = false }
+        )
+    }
+    FadeView(
+        visible = isServiceDialogVisible.value,
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .fillMaxSize()
+    ) {
+        TwoButtonDialog(
+            titleText = "통화를 종료할까요?",
+            messageText = "언제든 다시 시작할 수 있어요!",
+            endButtonText = "종료",
+            cancelButtonText = "취소",
+            onEndClick = {
+                model.onServiceEnd()
+            },
+            onCancelClick = { model.isServiceEndingDialog.value = false },
+            onBackHandler = { model.isServiceEndingDialog.value = false }
+        )
+    }
+    FadeView(
+        visible = isTranslationOverlayVisible.value,
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .fillMaxSize()
+    ) {
+        TranslationOverlayView()
+    }
     AnimatedVisibility(
         visible = isAiSettingVisible.value,
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it }),
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         AiSettingView()
     }

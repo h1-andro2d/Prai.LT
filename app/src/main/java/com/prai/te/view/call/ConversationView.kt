@@ -1,5 +1,6 @@
 package com.prai.te.view.call
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,6 +50,9 @@ internal fun ConversationListView(model: MainViewModel = viewModel()) {
     val conversationList = model.chatList.collectAsStateWithLifecycle()
     val selectedId = model.selectedConversationId.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    BackHandler {
+        model.closeChatList()
+    }
 
     Box(
         modifier = Modifier
@@ -175,6 +179,9 @@ private fun ConversationTitleItem(meta: MainConversationMeta, onClick: () -> Uni
 @Composable
 private fun ConversationRoomView(id: String = "test", model: MainViewModel = viewModel()) {
     val messages = model.getConversationFlow(id).collectAsStateWithLifecycle()
+    BackHandler {
+        model.selectedConversationId.value = null
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -198,7 +205,8 @@ private fun ConversationRoomView(id: String = "test", model: MainViewModel = vie
 private fun AiChatItem(message: MainConversation = MockConversation) {
     Row(
         verticalAlignment = Alignment.Bottom,
-        modifier = Modifier.padding(bottom = 26.dp)
+        horizontalArrangement = Arrangement.Start,
+        modifier = Modifier.padding(bottom = 26.dp).fillMaxWidth()
     ) {
         Text(
             text = message.text,
@@ -218,6 +226,7 @@ private fun AiChatItem(message: MainConversation = MockConversation) {
                         bottomEnd = 16.dp
                     )
                 )
+                .weight(1f, fill = false)
                 .widthIn(max = 276.dp)
                 .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
         )

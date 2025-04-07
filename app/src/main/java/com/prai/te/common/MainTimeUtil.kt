@@ -2,8 +2,10 @@ package com.prai.te.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
+import java.text.SimpleDateFormat
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Date
 import java.util.Locale
 
 internal object MainTimeUtil {
@@ -70,5 +72,14 @@ internal object MainTimeUtil {
                 remainingSeconds
             )
         }
+    }
+
+    @Composable
+    fun brithMillsToString(time: Long?): String {
+        if (time == null) {
+            return "NO DATA"
+        }
+        val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault())
+        return dateFormat.format(Date(time))
     }
 }

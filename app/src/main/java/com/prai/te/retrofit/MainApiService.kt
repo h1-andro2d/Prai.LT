@@ -29,6 +29,9 @@ internal interface MainApiService {
         @Query("limit") limit: Int = 50,
         @Query("cursor") cursor: String? = null
     ): MainConversationResponse
+
+    @POST("translation")
+    suspend fun translateText(@Body request: MainTranslationRequest): MainTranslationResponse
 }
 
 internal data class MainFirstCallRequest(
@@ -88,17 +91,26 @@ internal data class MainConversationMeta(
     val duration: Int
 )
 
-data class MainConversationResponse(
+internal data class MainConversationResponse(
     val conversationId: String,
     val messages: List<MainConversation>,
     val total: Int,
     val nextCursor: String?
 )
 
-data class MainConversation(
+internal data class MainConversation(
     val id: String,
     val timestamp: String,
     val speaker: String,
     val text: String,
     val userId: String
+)
+
+internal data class MainTranslationRequest(
+    val text: String,
+    val target_language: String = "Korean"
+)
+
+internal data class MainTranslationResponse(
+    val translation: String
 )

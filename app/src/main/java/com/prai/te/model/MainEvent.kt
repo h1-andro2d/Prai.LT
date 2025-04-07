@@ -12,4 +12,6 @@ internal sealed interface MainEvent {
     data object CallEnd: MainEvent
     data object ConversationListOpen: MainEvent
     data class ConversationOpen(val id: String): MainEvent
+    data class TranslationRequest(val text: String): MainEvent
+    data object ServiceEnd: MainEvent
 }

@@ -25,6 +25,7 @@ import com.prai.te.retrofit.MainCallSegment
 import com.prai.te.retrofit.MainRetrofit
 import com.prai.te.view.RootView
 import com.prai.te.view.model.CallSegmentItem
+import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val viewModel: MainViewModel by viewModels()
+    private val repository: MainRepositoryViewModel by viewModels()
     private val recorder: MainRecorder by lazy { MainRecorder(scope) }
     private val retrofit: MainRetrofit by lazy { MainRetrofit(scope.coroutineContext) }
     private val player: MainPlayer by lazy { MainPlayer(scope) }
@@ -104,21 +106,24 @@ class MainActivity : ComponentActivity() {
                         volumeReader.stop()
                     }
 
+                    is MainEvent.ServiceEnd -> finish()
+
                     is MainEvent.PlayStart -> player.start(it.path)
                     is MainEvent.GoogleLoginRequest -> {}
                     is MainEvent.LogoutRequest -> {}
                     is MainEvent.NoCredential -> startAddAccountActivity()
                     is MainEvent.CallStart -> {
                         retrofit.sendFirstCallRequest(
-                            viewModel.selectedVoiceSettingItem.value.code,
-                            viewModel.selectedVibeSettingItem.value.code,
-                            viewModel.speed.value
+                            repository.selectedVoiceSettingItem.value.code,
+                            repository.selectedVibeSettingItem.value.code,
+                            repository.selectedVoiceSpeed.value
                         )
                     }
 
                     is MainEvent.CallEnd -> player.stop()
                     is MainEvent.ConversationListOpen -> retrofit.getConversationList()
                     is MainEvent.ConversationOpen -> retrofit.getConversation(it.id)
+                    is MainEvent.TranslationRequest -> retrofit.getTranslation(it.text)
                 }
             }
         }
@@ -147,11 +152,13 @@ class MainActivity : ComponentActivity() {
         if (state is MainCallState.Active) {
             retrofit.sendCallRequest(
                 path,
-                viewModel.selectedVoiceSettingItem.value.code,
-                viewModel.selectedVibeSettingItem.value.code,
-                viewModel.speed.value,
+                repository.selectedVoiceSettingItem.value.code,
+                repository.selectedVibeSettingItem.value.code,
+                repository.selectedVoiceSpeed.value,
                 state.id
             )
+            viewModel.callResponseWaiting.value = true
+            player.stop()
         }
     }
 
@@ -193,6 +200,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         viewModel.updateSegmentItemList(items)
+        viewModel.callResponseWaiting.value = false
         player.start(items)
     }
 
