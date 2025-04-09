@@ -145,6 +145,7 @@ internal fun MenuOverlayView(model: MainViewModel = viewModel()) {
 
     Box(
         modifier = Modifier
+            .cleanClickable { }
             .fillMaxSize()
             .background(color = Color(0xB3000000))
     ) {
@@ -200,7 +201,7 @@ private fun MicIconWithAnimation(
                     painter = painterResource(R.drawable.main_mic_waiting),
                     contentDescription = null,
                     modifier = Modifier
-                        .cleanClickable { model.startRecording() }
+                        .cleanClickable { model.sendRecordingRequest() }
                         .size(iconSize)
                 )
             }

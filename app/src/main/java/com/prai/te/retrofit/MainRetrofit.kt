@@ -89,6 +89,7 @@ internal class MainRetrofit(coroutineContext: CoroutineContext) {
 
     fun getTranslation(text: String, targetLanguage: String = "Korean") {
         val request = MainTranslationRequest(text, targetLanguage)
+        MainLogger.Retrofit.log("getTranslation: request: $request")
         scope.launch {
             try {
                 val response = service.translateText(request)

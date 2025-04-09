@@ -1,5 +1,9 @@
 package com.prai.te.view.call
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -27,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,8 +51,11 @@ import com.prai.te.view.model.MainViewModel
 
 @Composable
 internal fun CallView(model: MainViewModel = viewModel()) {
+    val context = LocalContext.current
     val state = model.callState.collectAsStateWithLifecycle()
     val isRecording = model.isRecording.collectAsStateWithLifecycle()
+    val isRecordingPermissionDialog =
+        model.isRecordingPermissionDialog.collectAsStateWithLifecycle()
     val isServiceDialogVisible = model.isServiceEndingDialog.collectAsStateWithLifecycle()
     val isSettingOverlayVisible = model.isSettingOverlayVisible.collectAsStateWithLifecycle()
     val isCallEndDialog = model.isCallEndingDialog.collectAsStateWithLifecycle()
@@ -74,16 +82,17 @@ internal fun CallView(model: MainViewModel = viewModel()) {
         }
     }
 
+    val shouldBlur = isSettingOverlayVisible.value ||
+            isTranslationOverlayVisible.value ||
+            isCallEndDialog.value ||
+            isRecordingPermissionDialog.value
+
     Box(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.navigationBars)
             .fillMaxSize()
             .graphicsLayer {
-                renderEffect = if (
-                    isSettingOverlayVisible.value ||
-                    isTranslationOverlayVisible.value ||
-                    isCallEndDialog.value
-                ) blurEffect else null
+                renderEffect = if (shouldBlur) blurEffect else null
             }
             .background(color = Color(0xFF000000))
     ) {
@@ -219,6 +228,7 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             cancelButtonText = "취소",
             onEndClick = {
                 model.onCallEnd()
+                model.isCallEndingDialog.value = false
             },
             onCancelClick = { model.isCallEndingDialog.value = false },
             onBackHandler = { model.isCallEndingDialog.value = false }
@@ -237,9 +247,29 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             cancelButtonText = "취소",
             onEndClick = {
                 model.onServiceEnd()
+                model.isServiceEndingDialog.value = false
             },
             onCancelClick = { model.isServiceEndingDialog.value = false },
             onBackHandler = { model.isServiceEndingDialog.value = false }
+        )
+    }
+    FadeView(
+        visible = isRecordingPermissionDialog.value,
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .fillMaxSize()
+    ) {
+        TwoButtonDialog(
+            titleText = "마이크 권한이 필요합니다.",
+            messageText = "세팅화면에서 마이크 권한을 ON 해주세요.",
+            endButtonText = "세팅으로 가기",
+            cancelButtonText = "취소",
+            onEndClick = {
+                model.isRecordingPermissionDialog.value = false
+                openAppSettings(context)
+            },
+            onCancelClick = { model.isRecordingPermissionDialog.value = false },
+            onBackHandler = { model.isRecordingPermissionDialog.value = false }
         )
     }
     FadeView(
@@ -325,4 +355,11 @@ private fun GuideText() {
 @Composable
 private fun CallPreview() {
     CallView()
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+    context.startActivity(intent)
 }

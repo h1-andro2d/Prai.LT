@@ -25,13 +25,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.clickBlocker
 
 @Preview(widthDp = 600, heightDp = 1000)
 @Composable
 internal fun TwoButtonDialog(
     titleText: String = "오늘 대화는 여기까지 할까요?",
-    messageText: String = "오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.",
-    endButtonText: String = "종료",
+    messageText: String = "오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.",
+    endButtonText: String = "더 써볼래요",
     cancelButtonText: String = "취소",
     onEndClick: () -> Unit = {},
     onCancelClick: () -> Unit = {},
@@ -43,7 +44,9 @@ internal fun TwoButtonDialog(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .clickBlocker(true)
+            .fillMaxSize()
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -69,6 +72,7 @@ internal fun TwoButtonDialog(
                 fontWeight = FontWeight(400),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 20.dp)
             )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -94,7 +98,7 @@ internal fun TwoButtonDialog(
                             color = Color(0xFFFFCF31),
                             shape = RoundedCornerShape(size = 60.dp)
                         )
-                        .padding(start = 21.dp, top = 16.dp, end = 21.dp, bottom = 16.dp)
+                        .padding(top = 16.dp, bottom = 16.dp)
                 )
                 Text(
                     text = cancelButtonText,
@@ -111,7 +115,7 @@ internal fun TwoButtonDialog(
                             color = Color(0xFFFFCF31),
                             shape = RoundedCornerShape(size = 60.dp)
                         )
-                        .padding(start = 21.dp, top = 16.dp, end = 21.dp, bottom = 16.dp)
+                        .padding(top = 16.dp,  bottom = 16.dp)
                 )
             }
         }

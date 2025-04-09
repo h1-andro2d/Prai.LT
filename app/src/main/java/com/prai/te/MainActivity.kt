@@ -166,8 +166,9 @@ class MainActivity : ComponentActivity() {
         if (MainPermissionHandler.isGranted(this, MainPermission.AUDIO)) {
             recorder.start(this)
             volumeReader.start(this)
+            viewModel.startRecording()
         } else {
-            MainPermissionHandler.requestPermissions(this, MainPermission.AUDIO)
+            viewModel.isRecordingPermissionDialog.value = true
         }
     }
 

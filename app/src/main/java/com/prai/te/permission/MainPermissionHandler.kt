@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.prai.te.MainActivity
 
 internal object MainPermissionHandler {
     fun requestPermissions(activity: ComponentActivity, permission: MainPermission) {

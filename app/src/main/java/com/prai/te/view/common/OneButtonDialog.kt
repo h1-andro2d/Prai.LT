@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.clickBlocker
 
 @Preview(widthDp = 600, heightDp = 1000)
 @Composable
@@ -40,7 +41,9 @@ internal fun CallOneButtonDialog(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .clickBlocker(true)
+            .fillMaxSize()
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

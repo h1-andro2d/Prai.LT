@@ -33,6 +33,7 @@ internal class MainViewModel : ViewModel() {
     val isMainSettingVisible = MutableStateFlow(false)
     val isProfileSettingVisible = MutableStateFlow(false)
     val isCallEndingDialog = MutableStateFlow(false)
+    val isRecordingPermissionDialog = MutableStateFlow(false)
     val isServiceEndingDialog = MutableStateFlow(false)
     val translationState = MutableStateFlow<MainTranslationState>(MainTranslationState.None)
     val isAiSettingVisible = MutableStateFlow(false)
@@ -147,7 +148,6 @@ internal class MainViewModel : ViewModel() {
         stopCallTimer()
         callState.value = MainCallState.None
         initializeData()
-        isCallEndingDialog.value = false
         viewModelScope.launch { event.emit(MainEvent.CallEnd) }
     }
 
@@ -162,6 +162,9 @@ internal class MainViewModel : ViewModel() {
     fun startRecording() {
         isRecording.value = true
         startRecordTimer()
+    }
+
+    fun sendRecordingRequest() {
         viewModelScope.launch { event.emit(MainEvent.RecordStart) }
     }
 

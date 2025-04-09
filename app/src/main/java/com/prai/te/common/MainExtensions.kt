@@ -31,6 +31,15 @@ internal fun Modifier.cleanClickable(onClick: () -> Unit): Modifier {
     }
 }
 
+
+@Composable
+internal fun Modifier.clickBlocker(shouldBlock: Boolean): Modifier {
+    if (shouldBlock.not()) {
+        return this
+    }
+    return cleanClickable { }
+}
+
 internal fun Modifier.clearFocusCleanClickable(
     lazy: Boolean = false,
     action: () -> Unit = {}

@@ -108,7 +108,7 @@ internal data class MainConversation(
 
 internal data class MainTranslationRequest(
     val text: String,
-    val target_language: String = "Korean"
+    val targetLanguage: String = "Korean"
 )
 
 internal data class MainTranslationResponse(
