@@ -2,10 +2,12 @@ package com.prai.te.view.model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.prai.te.auth.MainAuthManager
 import com.prai.te.media.MainPlayer
 import com.prai.te.media.MainVolumeReader
 import com.prai.te.model.MainCallState
 import com.prai.te.model.MainEvent
+import com.prai.te.model.MainIntroState
 import com.prai.te.model.MainTranslationState
 import com.prai.te.retrofit.MainConversationMeta
 import com.prai.te.retrofit.MainConversationResponse
@@ -13,18 +15,22 @@ import com.prai.te.retrofit.MainRetrofit
 import java.util.Timer
 import kotlin.concurrent.fixedRateTimer
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 internal class MainViewModel : ViewModel() {
     private val conversationFlowMap =
         mutableMapOf<String, MutableStateFlow<MainConversationResponse?>>()
+    private val mutableEvent by lazy { MutableSharedFlow<MainEvent>() }
 
-    val event = MutableSharedFlow<MainEvent>()
+    val event by lazy { mutableEvent.asSharedFlow() }
+
     val isRecording = MutableStateFlow(false)
     val segmentItemList = MutableStateFlow<List<CallSegmentItem>>(emptyList())
     val callState = MutableStateFlow<MainCallState>(MainCallState.None)
@@ -46,6 +52,16 @@ internal class MainViewModel : ViewModel() {
     val chatList = MutableStateFlow<List<MainConversationMeta>>(emptyList())
     val callResponseWaiting = MutableStateFlow(false)
     val selectedConversationId = MutableStateFlow<String?>(null)
+
+    val introState = MutableStateFlow(MainIntroState.SPLASH)
+    val introEndDialog = MutableStateFlow(false)
+    val forceUpdateDialog = MutableStateFlow(false)
+    val isLoginProcessing = MutableStateFlow(false)
+    val isRegisterProcessing = MutableStateFlow(false)
+    val isServerErrorDialog = MutableStateFlow(false)
+
+    val isLogoutDialog = MutableStateFlow(false)
+    val isDeleteUserDialog = MutableStateFlow(false)
 
     private var callTimer: Timer? = null
         set(value) {
@@ -73,6 +89,13 @@ internal class MainViewModel : ViewModel() {
         when (event) {
             is MainRetrofit.Event.CallResponse -> {
 
+            }
+
+            is MainRetrofit.Event.MinVersionResponse -> {
+            }
+
+            is MainRetrofit.Event.UserInfoNotFound -> {
+                introState.value = MainIntroState.ONBOARDING
             }
 
             is MainRetrofit.Event.CallResponseError -> {
@@ -108,6 +131,10 @@ internal class MainViewModel : ViewModel() {
                     onCallConnected(event.response.conversationId)
                 }
             }
+
+            else -> {
+
+            }
         }
     }
 
@@ -135,7 +162,7 @@ internal class MainViewModel : ViewModel() {
     fun onCallStart() {
         initializeData()
         callState.value = MainCallState.Connecting
-        viewModelScope.launch { event.emit(MainEvent.CallStart) }
+        dispatchEvent(MainEvent.CallStart)
     }
 
     fun onCallConnected(id: String) {
@@ -148,7 +175,7 @@ internal class MainViewModel : ViewModel() {
         stopCallTimer()
         callState.value = MainCallState.None
         initializeData()
-        viewModelScope.launch { event.emit(MainEvent.CallEnd) }
+        dispatchEvent(MainEvent.CallEnd)
     }
 
     fun onServiceEnd() {
@@ -156,7 +183,7 @@ internal class MainViewModel : ViewModel() {
         callState.value = MainCallState.None
         initializeData()
         isServiceEndingDialog.value = false
-        viewModelScope.launch { event.emit(MainEvent.ServiceEnd) }
+        dispatchEvent(MainEvent.ServiceEnd)
     }
 
     fun startRecording() {
@@ -165,24 +192,24 @@ internal class MainViewModel : ViewModel() {
     }
 
     fun sendRecordingRequest() {
-        viewModelScope.launch { event.emit(MainEvent.RecordStart) }
+        dispatchEvent(MainEvent.RecordStart)
     }
 
     fun stopRecording() {
         isRecording.value = false
         stopRecordTimer()
-        viewModelScope.launch { event.emit(MainEvent.RecordStop) }
+        dispatchEvent(MainEvent.RecordStop)
     }
 
     fun cancelRecording() {
         isRecording.value = false
         stopRecordTimer()
-        viewModelScope.launch { event.emit(MainEvent.RecordCancel) }
+        dispatchEvent(MainEvent.RecordCancel)
     }
 
     fun openChatList() {
         isConversationListVisible.value = true
-        viewModelScope.launch { event.emit(MainEvent.ConversationListOpen) }
+        dispatchEvent(MainEvent.ConversationListOpen)
     }
 
     fun closeChatList() {
@@ -215,14 +242,38 @@ internal class MainViewModel : ViewModel() {
             return
         }
         translationState.value = MainTranslationState.Requested(text)
-        viewModelScope.launch { event.emit(MainEvent.TranslationRequest(text)) }
+        dispatchEvent(MainEvent.TranslationRequest(text))
     }
 
-    private fun initializeData() {
+    fun launchDelayed(delay: Long, callback: () -> Unit) {
+        viewModelScope.launch {
+            delay(delay)
+            callback.invoke()
+        }
+    }
+
+    fun dispatchEvent(target: MainEvent) {
+        viewModelScope.launch { mutableEvent.emit(target) }
+    }
+
+    fun onAuthEvent(event: MainAuthManager.Event) {
+        when (event) {
+            is MainAuthManager.Event.Connect -> {
+
+            }
+
+            else -> {
+
+            }
+        }
+    }
+
+    fun initializeData() {
         currentSegment.value = null
         isRecording.value = false
         isAiSettingVisible.value = false
         isCallEndingDialog.value = false
+        chatList.value = emptyList()
         isSettingOverlayVisible.value = false
         isTranslationOverlayVisible.value = false
         isConversationListVisible.value = false

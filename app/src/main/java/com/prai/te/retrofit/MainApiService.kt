@@ -1,20 +1,29 @@
 package com.prai.te.retrofit
 
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 internal interface MainApiService {
     @POST("call")
     @Headers("Content-Type: application/json")
-    suspend fun sendCallRequest(@Body request: MainCallRequest): MainCallResponse
+    suspend fun sendCallRequest(
+        @Header("Authorization") authToken: String,
+        @Body request: MainCallRequest
+    ): MainCallResponse
 
     @POST("call")
     @Headers("Content-Type: application/json")
-    suspend fun sendFirstCallRequest(@Body request: MainFirstCallRequest): MainFirstCallResponse
+    suspend fun sendFirstCallRequest(
+        @Header("Authorization") authToken: String,
+        @Body request: MainFirstCallRequest
+    ): MainFirstCallResponse
 
     @GET("/conversations")
     suspend fun getConversationList(
@@ -32,10 +41,39 @@ internal interface MainApiService {
 
     @POST("translation")
     suspend fun translateText(@Body request: MainTranslationRequest): MainTranslationResponse
+
+    @POST("users")
+    @Headers("Content-Type: application/json")
+    suspend fun registerUser(
+        @Header("Authorization") authToken: String,
+        @Body request: MainUserRegistrationRequest
+    ): MainUserRegistrationResponse
+
+    @GET("users")
+    suspend fun getUserInfo(
+        @Header("Authorization") authToken: String
+    ): MainUserInfo
+
+    @PUT("users")
+    @Headers("Content-Type: application/json")
+    suspend fun updateUserInfo(
+        @Header("Authorization") authToken: String,
+        @Body request: MainUserUpdateRequest
+    ): MainUserUpdateResponse
+
+    @DELETE("users")
+    suspend fun deleteUser(
+        @Header("Authorization") authToken: String
+    ): MainUserDeletionResponse
+
+    @GET("version/min")
+    suspend fun getMinimumVersion(
+        @Query("client") clientType: String
+    ): MainMinVersionResponse
 }
 
 internal data class MainFirstCallRequest(
-    val userId: String = "test",
+    val userId: String,
     val voice: String? = null,
     val ttsOption: String? = null
 )
@@ -113,4 +151,66 @@ internal data class MainTranslationRequest(
 
 internal data class MainTranslationResponse(
     val translation: String
+)
+
+internal data class MainUserRegistrationRequest(
+    val name: String,
+    val birthYear: String? = null,
+    val gender: String? = null
+)
+
+internal data class MainUserRegistrationResponse(
+    val message: String,
+    val user: MainUserInfo
+)
+
+internal data class MainUserInfo(
+    val userId: String,
+    val name: String,
+    val email: String?,
+    val birthYear: String?,
+    val gender: String?,
+    val createdAt: String
+)
+
+internal data class MainUserUpdateRequest(
+    val name: String,
+    val email: String? = null,
+    val birthYear: String? = null,
+    val gender: String? = null
+)
+
+internal data class MainUserUpdateResponse(
+    val message: String,
+    val user: MainUserInfo
+)
+
+internal data class MainUserDeletionResponse(
+    val message: String,
+    val deletedUser: MainDeletedUserInfo
+)
+
+internal data class MainDeletedUserInfo(
+    val userId: String,
+    val deletedAt: String,
+    val retentionUntil: String,
+    val name: String,
+    val email: String?,
+    val gender: String?,
+    val birthYear: String?,
+    val conversations: List<MainDeletedConversationInfo>?
+)
+
+internal data class MainDeletedConversationInfo(
+    val conversationId: String,
+    val createdAt: String,
+    val messages: List<Any>? // TODO
+)
+
+internal data class MainMinVersionResponse(
+    val meta: MainMinVersionMeta
+)
+
+internal data class MainMinVersionMeta(
+    val minVersion: String
 )

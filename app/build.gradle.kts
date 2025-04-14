@@ -99,7 +99,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.exoplayer)
     implementation(libs.apng)
-
+    implementation(libs.androidx.core.splashscreen)
 }
 
 composeCompiler {

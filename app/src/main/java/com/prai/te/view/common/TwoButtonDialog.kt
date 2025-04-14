@@ -23,9 +23,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
 import com.prai.te.common.clickBlocker
+import com.prai.te.common.textDp
 
 @Preview(widthDp = 600, heightDp = 1000)
 @Composable
@@ -34,17 +35,35 @@ internal fun TwoButtonDialog(
     messageText: String = "오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.",
     endButtonText: String = "더 써볼래요",
     cancelButtonText: String = "취소",
-    onEndClick: () -> Unit = {},
-    onCancelClick: () -> Unit = {},
-    onBackHandler: () -> Unit = {}
+    onLeftButtonClick: () -> Unit = {},
+    onRightButtonClick: () -> Unit = {},
+    onBackHandler: () -> Unit = {},
+    drawBackground: Boolean = false,
+    reverseColor: Boolean = false
 ) {
     BackHandler {
         onBackHandler()
     }
+    val backgroundModifier = if (drawBackground) {
+        Modifier.background(color = Color(0xB3000000))
+    } else {
+        Modifier
+    }
+
+    val leftButtonColor = Modifier.background(
+        color = Color(0xFFFFCF31),
+        shape = RoundedCornerShape(size = 60.dp)
+    )
+
+    val rightButtonColor = Modifier.border(
+        width = 0.5.dp,
+        color = Color(0xFFFFCF31),
+        shape = RoundedCornerShape(size = 60.dp)
+    )
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = backgroundModifier
             .clickBlocker(true)
             .fillMaxSize()
     ) {
@@ -58,8 +77,9 @@ internal fun TwoButtonDialog(
         ) {
             Text(
                 text = titleText,
-                fontSize = 18.sp,
-                lineHeight = 23.4.sp,
+                fontSize = 18.textDp,
+                lineHeight = 23.textDp,
+                fontFamily = MainFont.Pretendard,
                 fontWeight = FontWeight(600),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
@@ -67,8 +87,9 @@ internal fun TwoButtonDialog(
             )
             Text(
                 text = messageText,
-                fontSize = 16.sp,
-                lineHeight = 20.8.sp,
+                fontSize = 16.textDp,
+                fontFamily = MainFont.Pretendard,
+                lineHeight = 20.textDp,
                 fontWeight = FontWeight(400),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
@@ -86,36 +107,51 @@ internal fun TwoButtonDialog(
             ) {
                 Text(
                     text = endButtonText,
-                    fontSize = 18.sp,
-                    lineHeight = 23.4.sp,
-                    fontWeight = FontWeight(600),
-                    color = Color(0xFF000000),
+                    fontSize = 18.textDp,
+                    fontFamily = MainFont.Pretendard,
+                    lineHeight = 23.textDp,
+                    fontWeight = FontWeight(400),
+                    color = if (reverseColor.not()) {
+                        Color(0xFF000000)
+                    } else {
+                        Color(0xFFFFCF31)
+                    },
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .cleanClickable { onEndClick() }
+                        .cleanClickable { onLeftButtonClick() }
                         .weight(1f)
-                        .background(
-                            color = Color(0xFFFFCF31),
-                            shape = RoundedCornerShape(size = 60.dp)
+                        .then(
+                            if (reverseColor.not()) {
+                                leftButtonColor
+                            } else {
+                                rightButtonColor
+                            }
                         )
                         .padding(top = 16.dp, bottom = 16.dp)
                 )
                 Text(
                     text = cancelButtonText,
-                    fontSize = 18.sp,
-                    lineHeight = 23.4.sp,
+                    fontFamily = MainFont.Pretendard,
+                    fontSize = 18.textDp,
+                    lineHeight = 23.textDp,
                     fontWeight = FontWeight(400),
-                    color = Color(0xFFFFCF31),
+                    color = if (reverseColor.not()) {
+                        Color(0xFFFFCF31)
+                    } else {
+                        Color(0xFF000000)
+                    },
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .cleanClickable { onCancelClick() }
+                        .cleanClickable { onRightButtonClick() }
                         .weight(1f)
-                        .border(
-                            width = 0.5.dp,
-                            color = Color(0xFFFFCF31),
-                            shape = RoundedCornerShape(size = 60.dp)
+                        .then(
+                            if (reverseColor.not()) {
+                                rightButtonColor
+                            } else {
+                                leftButtonColor
+                            }
                         )
-                        .padding(top = 16.dp,  bottom = 16.dp)
+                        .padding(top = 16.dp, bottom = 16.dp)
                 )
             }
         }

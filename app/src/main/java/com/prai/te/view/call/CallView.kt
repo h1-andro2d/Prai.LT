@@ -42,7 +42,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
 import com.prai.te.common.FadeView
+import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.textDp
 import com.prai.te.model.MainCallState
 import com.prai.te.view.AlphaAnimationText
 import com.prai.te.view.LoadingDotAnimation2
@@ -98,7 +100,8 @@ internal fun CallView(model: MainViewModel = viewModel()) {
     ) {
         Text(
             text = "PRAI",
-            fontSize = 36.sp,
+            fontFamily = MainFont.Pretendard,
+            fontSize = 36.textDp,
             color = Color(0xFFFFFFFF),
             modifier = Modifier
                 .padding(top = 63.dp)
@@ -112,7 +115,8 @@ internal fun CallView(model: MainViewModel = viewModel()) {
         ) {
             Text(
                 text = "연결중",
-                fontSize = 18.sp,
+                fontFamily = MainFont.Pretendard,
+                fontSize = 18.textDp,
                 color = Color(0xFF959595),
                 fontWeight = FontWeight.W500
             )
@@ -146,8 +150,9 @@ internal fun CallView(model: MainViewModel = viewModel()) {
         ) {
             Text(
                 text = currentSegment.value?.text ?: "",
-                fontSize = 16.sp,
-                lineHeight = 22.4.sp,
+                fontFamily = MainFont.Pretendard,
+                fontSize = 16.textDp,
+                lineHeight = 22.textDp,
                 fontWeight = FontWeight(500),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
@@ -156,6 +161,7 @@ internal fun CallView(model: MainViewModel = viewModel()) {
 
         }
         TalkerBox(
+            currentSegment.value,
             state = state.value,
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -226,11 +232,11 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             messageText = "오늘도 멋지게 말하셨어요!\n다음 전화도 기대할게요.",
             endButtonText = "종료",
             cancelButtonText = "취소",
-            onEndClick = {
+            onLeftButtonClick = {
                 model.onCallEnd()
                 model.isCallEndingDialog.value = false
             },
-            onCancelClick = { model.isCallEndingDialog.value = false },
+            onRightButtonClick = { model.isCallEndingDialog.value = false },
             onBackHandler = { model.isCallEndingDialog.value = false }
         )
     }
@@ -245,11 +251,11 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             messageText = "언제든 다시 시작할 수 있어요!",
             endButtonText = "종료",
             cancelButtonText = "취소",
-            onEndClick = {
+            onLeftButtonClick = {
                 model.onServiceEnd()
                 model.isServiceEndingDialog.value = false
             },
-            onCancelClick = { model.isServiceEndingDialog.value = false },
+            onRightButtonClick = { model.isServiceEndingDialog.value = false },
             onBackHandler = { model.isServiceEndingDialog.value = false }
         )
     }
@@ -264,11 +270,11 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             messageText = "세팅화면에서 마이크 권한을 ON 해주세요.",
             endButtonText = "세팅으로 가기",
             cancelButtonText = "취소",
-            onEndClick = {
+            onLeftButtonClick = {
                 model.isRecordingPermissionDialog.value = false
                 openAppSettings(context)
             },
-            onCancelClick = { model.isRecordingPermissionDialog.value = false },
+            onRightButtonClick = { model.isRecordingPermissionDialog.value = false },
             onBackHandler = { model.isRecordingPermissionDialog.value = false }
         )
     }
@@ -310,7 +316,8 @@ private fun TimeText(model: MainViewModel = viewModel()) {
             minutes,
             remainingSeconds
         ),
-        fontSize = 18.sp,
+        fontFamily = MainFont.Pretendard,
+        fontSize = 18.textDp,
         color = Color(0xFFFFFFFF),
         fontWeight = FontWeight.W500
     )
@@ -326,8 +333,9 @@ private fun NotificationText(modifier: Modifier, model: MainViewModel = viewMode
     ) {
         Text(
             text = notification.value ?: "",
-            fontSize = 14.sp,
-            lineHeight = 19.6.sp,
+            fontSize = 14.textDp,
+            fontFamily = MainFont.Pretendard,
+            lineHeight = 19.textDp,
             fontWeight = FontWeight(400),
             color = Color(0xFFFFFFFF),
             textAlign = TextAlign.Center,
@@ -347,6 +355,7 @@ private fun GuideText() {
     Text(
         text = "언제든 편하게 연락하세요!",
         fontSize = 16.sp,
+        fontFamily = MainFont.Pretendard,
         color = Color(0xFFFFFFFF)
     )
 }

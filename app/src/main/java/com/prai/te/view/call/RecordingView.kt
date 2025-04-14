@@ -32,7 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
+import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.textDp
 import com.prai.te.view.model.MainViewModel
 import kotlin.random.Random
 import kotlinx.coroutines.delay
@@ -61,7 +63,8 @@ internal fun RecordingView(model: MainViewModel = viewModel()) {
                 minutes,
                 remainingSeconds
             ),
-            fontSize = 12.sp,
+            fontSize = 12.textDp,
+            fontFamily = MainFont.Pretendard,
             fontWeight = FontWeight(500),
             color = Color(0xFFFFFFFF),
             modifier = Modifier.padding(start = 17.dp, end = 20.dp)

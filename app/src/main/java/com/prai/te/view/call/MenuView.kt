@@ -41,7 +41,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
 import com.prai.te.common.FadeView
+import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.textDp
 import com.prai.te.model.MainCallState
 import com.prai.te.view.model.MainViewModel
 import kotlinx.coroutines.delay
@@ -312,8 +314,9 @@ private fun OverlayTextIcon(
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = text,
-            fontSize = 16.sp,
-            lineHeight = 22.4.sp,
+            fontFamily = MainFont.Pretendard,
+            fontSize = 16.textDp,
+            lineHeight = 22.textDp,
             fontWeight = FontWeight(600),
             color = Color(0xFFFFFFFF),
             modifier = Modifier.padding(end = 9.dp)

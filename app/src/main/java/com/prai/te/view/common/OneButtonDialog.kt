@@ -22,26 +22,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
 import com.prai.te.common.clickBlocker
+import com.prai.te.common.textDp
 
 @Preview(widthDp = 600, heightDp = 1000)
 @Composable
-internal fun CallOneButtonDialog(
+internal fun OneButtonDialog(
     titleText: String = "오늘 대화는 여기까지 할까요?",
     messageText: String = "새로운 기능을 쓰기 위해 업데이트가 필요해요.\n오늘도 말하기 연습, 함께 해요 :)",
     updateButtonText: String = "PRAI 업데이트 하기",
-    onUpdateClick: () -> Unit = {},
-    onBackHandler: (() -> Unit)? = null
+    onMainButtonClick: () -> Unit = {},
+    onBackHandler: (() -> Unit) = {},
+    drawBackground: Boolean = false
 ) {
-    if (onBackHandler != null) {
-        BackHandler { onBackHandler() }
+    BackHandler { onBackHandler() }
+
+    val modifier = if (drawBackground) {
+        Modifier.background(color = Color(0xB3000000))
+    } else {
+        Modifier
     }
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .clickBlocker(true)
             .fillMaxSize()
     ) {
@@ -55,8 +61,9 @@ internal fun CallOneButtonDialog(
         ) {
             Text(
                 text = titleText,
-                fontSize = 18.sp,
-                lineHeight = 23.4.sp,
+                fontSize = 18.textDp,
+                fontFamily = MainFont.Pretendard,
+                lineHeight = 23.textDp,
                 fontWeight = FontWeight(600),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
@@ -64,8 +71,9 @@ internal fun CallOneButtonDialog(
             )
             Text(
                 text = messageText,
-                fontSize = 16.sp,
-                lineHeight = 20.8.sp,
+                fontSize = 16.textDp,
+                fontFamily = MainFont.Pretendard,
+                lineHeight = 20.textDp,
                 fontWeight = FontWeight(400),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
@@ -83,13 +91,14 @@ internal fun CallOneButtonDialog(
             ) {
                 Text(
                     text = updateButtonText,
-                    fontSize = 18.sp,
-                    lineHeight = 23.4.sp,
+                    fontSize = 18.textDp,
+                    fontFamily = MainFont.Pretendard,
+                    lineHeight = 23.textDp,
                     fontWeight = FontWeight(600),
                     color = Color(0xFF000000),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .cleanClickable { onUpdateClick() }
+                        .cleanClickable { onMainButtonClick() }
                         .weight(1f)
                         .background(
                             color = Color(0xFFFFCF31),

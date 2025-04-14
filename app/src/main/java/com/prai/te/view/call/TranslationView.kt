@@ -32,7 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
+import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.textDp
 import com.prai.te.model.MainTranslationState
 import com.prai.te.view.model.MainViewModel
 import com.prai.te.view.shimmerLoadingAnimation
@@ -84,8 +86,9 @@ internal fun TranslationOverlayView(model: MainViewModel = viewModel()) {
                     )
                     Text(
                         text = "번역하기",
-                        fontSize = 18.sp,
-                        lineHeight = 25.2.sp,
+                        fontSize = 18.textDp,
+                        fontFamily = MainFont.Pretendard,
+                        lineHeight = 25.textDp,
                         fontWeight = FontWeight(600),
                         color = Color(0xFFFFFFFF)
                     )
@@ -101,8 +104,9 @@ internal fun TranslationOverlayView(model: MainViewModel = viewModel()) {
                 }
                 Text(
                     text = original,
-                    fontSize = 17.sp,
-                    lineHeight = 23.8.sp,
+                    fontSize = 17.textDp,
+                    fontFamily = MainFont.Pretendard,
+                    lineHeight = 23.textDp,
                     fontWeight = FontWeight(300),
                     color = Color(0xFFFFFFFF),
                     modifier = Modifier.padding(20.dp)
@@ -124,8 +128,9 @@ internal fun TranslationOverlayView(model: MainViewModel = viewModel()) {
                 if (currentState is MainTranslationState.Done) {
                     Text(
                         text = currentState.translatedText,
-                        fontSize = 16.sp,
-                        lineHeight = 22.4.sp,
+                        fontSize = 16.textDp,
+                        fontFamily = MainFont.Pretendard,
+                        lineHeight = 22.textDp,
                         fontWeight = FontWeight(500),
                         color = Color(0xFF000000)
                     )
@@ -149,8 +154,9 @@ internal fun TranslationOverlayView(model: MainViewModel = viewModel()) {
                 )
                 Text(
                     text = "이 문장을 말로 따라하면 더 오래 기억돼요!",
-                    fontSize = 14.sp,
-                    lineHeight = 19.6.sp,
+                    fontSize = 14.textDp,
+                    lineHeight = 19.textDp,
+                    fontFamily = MainFont.Pretendard,
                     fontWeight = FontWeight(600),
                     color = Color(0xFFFFCF31),
                 )

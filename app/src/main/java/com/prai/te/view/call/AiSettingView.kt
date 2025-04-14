@@ -5,6 +5,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,8 +44,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
+import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
 import com.prai.te.common.rippleClickable
+import com.prai.te.common.textDp
 import com.prai.te.model.MainVibeSettingItem
 import com.prai.te.model.MainVoiceSettingItem
 import com.prai.te.view.common.MainSaveButton
@@ -93,7 +97,8 @@ internal fun AiSettingView(
             Text(
                 text = "AI 설정",
                 textAlign = TextAlign.Center,
-                fontSize = 18.sp,
+                fontFamily = MainFont.Pretendard,
+                fontSize = 18.textDp,
                 color = Color(0xFFFFFFFF),
                 fontWeight = FontWeight.W600,
             )
@@ -112,12 +117,11 @@ internal fun AiSettingView(
         )
         AiSettingGrid(modifier = Modifier.padding(top = 88.dp, bottom = 79.dp))
         MainSaveButton(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .cleanClickable {
-                    model.isAiSettingVisible.value = false
-                    repository.saveCurrentAiSetting()
-                }
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onClick = {
+                model.isAiSettingVisible.value = false
+                repository.saveCurrentAiSetting()
+            }
         )
     }
 }
@@ -228,20 +232,23 @@ private fun AiSettingSlider(model: MainRepositoryViewModel = viewModel()) {
         ) {
             Text(
                 text = "느림",
-                fontSize = 16.sp,
-                lineHeight = 20.8.sp,
+                fontFamily = MainFont.Pretendard,
+                fontSize = 16.textDp,
+                lineHeight = 20.textDp,
                 fontWeight = FontWeight(400),
                 color = Color(0xFFFFFFFF),
             )
             Text(
                 text = "중간",
-                fontSize = 16.sp,
-                lineHeight = 20.8.sp,
+                fontFamily = MainFont.Pretendard,
+                fontSize = 16.textDp,
+                lineHeight = 20.textDp,
                 fontWeight = FontWeight(400),
                 color = Color(0xFFFFFFFF),
             )
             Text(
                 text = "빠름",
+                fontFamily = MainFont.Pretendard,
                 fontSize = 16.sp,
                 lineHeight = 20.8.sp,
                 fontWeight = FontWeight(400),
@@ -406,6 +413,7 @@ private fun VoiceSettingItem(
     ) {
         Text(
             text = item.description,
+            fontFamily = MainFont.Pretendard,
             fontSize = 16.sp,
             lineHeight = 20.8.sp,
             maxLines = 2,
@@ -416,6 +424,7 @@ private fun VoiceSettingItem(
         )
         Text(
             text = item.gender.text,
+            fontFamily = MainFont.Pretendard,
             fontSize = 16.sp,
             lineHeight = 20.8.sp,
             fontWeight = FontWeight(400),
@@ -445,6 +454,7 @@ private fun VibeSettingItem(
     ) {
         Text(
             text = item.description,
+            fontFamily = MainFont.Pretendard,
             fontSize = 16.sp,
             lineHeight = 20.8.sp,
             maxLines = 2,
@@ -461,6 +471,7 @@ private fun AiSettingGridTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         fontSize = 18.sp,
+        fontFamily = MainFont.Pretendard,
         lineHeight = 23.4.sp,
         fontWeight = FontWeight(600),
         color = Color(0xFFFFCF31),

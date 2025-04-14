@@ -1,6 +1,8 @@
 package com.prai.te.common
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -72,7 +74,32 @@ internal fun Modifier.clearFocusRippleClickable(
         val scope = rememberCoroutineScope()
         val focusManager = LocalFocusManager.current
         val controller = LocalSoftwareKeyboardController.current
-        Modifier.rippleClickable {
+        Modifier.clearFocusClickable {
+            scope.launch {
+                if (lazy.not()) {
+                    action.invoke()
+                }
+                controller?.hide()
+                delay(300L)
+                focusManager.clearFocus()
+                if (lazy) {
+                    action.invoke()
+                }
+            }
+        }
+    }
+)
+
+
+internal fun Modifier.clearFocusClickable(
+    lazy: Boolean = false,
+    action: () -> Unit = {}
+): Modifier = then(
+    Modifier.composed {
+        val scope = rememberCoroutineScope()
+        val focusManager = LocalFocusManager.current
+        val controller = LocalSoftwareKeyboardController.current
+        Modifier.clickable {
             scope.launch {
                 if (lazy.not()) {
                     action.invoke()
@@ -122,10 +149,26 @@ internal fun FadeView(
     }
 }
 
+@Composable
+internal fun CutFadeView(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    cutStart: Boolean = false,
+    cutEnd: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    val enterDuration = if (cutStart) 0 else 700
+    val exitDuration = if (cutEnd) 0 else 700
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(enterDuration)),
+        exit = fadeOut(tween(exitDuration)),
+        modifier = modifier
+    ) {
+        content.invoke()
+    }
+}
+
 internal val Int.textDp: TextUnit
     @Composable get() = with(LocalDensity.current) { this@textDp.dp.toSp() }
-
-@Composable
-internal fun clearFocusAsnyc() {
-
-}

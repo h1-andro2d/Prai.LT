@@ -7,7 +7,8 @@ internal sealed interface MainEvent {
     data class PlayStart(val path: String): MainEvent
     data object GoogleLoginRequest: MainEvent
     data object LogoutRequest: MainEvent
-    data object NoCredential: MainEvent
+    data object RegisterUserRequest: MainEvent
+    data object DeleteUserRequest: MainEvent
     data object CallStart: MainEvent
     data object CallEnd: MainEvent
     data object ConversationListOpen: MainEvent

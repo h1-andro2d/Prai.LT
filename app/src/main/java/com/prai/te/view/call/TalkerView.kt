@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -32,18 +31,16 @@ import androidx.core.graphics.createBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.penfeizhou.animation.apng.APNGDrawable
 import com.github.penfeizhou.animation.loader.ResourceStreamLoader
 import com.prai.te.R
 import com.prai.te.common.FadeView
 import com.prai.te.model.MainCallState
-import com.prai.te.view.model.MainViewModel
+import com.prai.te.view.model.CallSegmentItem
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 
 @Composable
-internal fun TalkerBox(state: MainCallState, modifier: Modifier) {
+internal fun TalkerBox(segment: CallSegmentItem?, state: MainCallState, modifier: Modifier) {
     val imageSize = 150.dp
     val initialRadius = with(LocalDensity.current) { imageSize.toPx() / 2 - 10f }
 
@@ -52,9 +49,9 @@ internal fun TalkerBox(state: MainCallState, modifier: Modifier) {
         modifier = modifier.size(383.dp)
     ) {
         if (state != MainCallState.None) {
-            GrowingCircle(state, initialRadius = initialRadius, initialDelay = 0)
-            GrowingCircle(state, initialRadius = initialRadius, initialDelay = 1000)
-            GrowingCircle(state, initialRadius = initialRadius, initialDelay = 2000)
+            GrowingCircle(segment, state, initialRadius = initialRadius, initialDelay = 0)
+            GrowingCircle(segment, state, initialRadius = initialRadius, initialDelay = 1000)
+            GrowingCircle(segment, state, initialRadius = initialRadius, initialDelay = 2000)
         }
         Crossfade(state, label = "talker_box_crosss_fade") { state ->
             when (state) {
@@ -77,22 +74,21 @@ internal fun TalkerBox(state: MainCallState, modifier: Modifier) {
 
 @Composable
 private fun GrowingCircle(
+    segment: CallSegmentItem?,
     state: MainCallState,
     initialRadius: Float = 0f,
-    initialDelay: Int = 0,
-    model: MainViewModel = viewModel()
+    initialDelay: Int = 0
 ) {
     val strokeWidth = with(LocalDensity.current) { 1.dp.toPx() }
     val maxRadius = with(LocalDensity.current) { 180.dp.toPx() }
     val radius = remember { Animatable(initialRadius) }
-    val segment = model.currentSegment.collectAsStateWithLifecycle()
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
 
-    val isVisible by remember(segment.value, state, lifecycleState) {
+    val isVisible by remember(segment, state, lifecycleState) {
         derivedStateOf {
-            (segment.value != null || state == MainCallState.Connecting) &&
+            (segment != null || state == MainCallState.Connecting) &&
                     lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
         }
     }

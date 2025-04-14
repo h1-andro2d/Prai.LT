@@ -1,42 +1,41 @@
 {
   "project_info": {
-    "project_number": "363290190285",
-    "project_id": "prai-api",
-    "storage_bucket": "prai-api.firebasestorage.app"
+    "project_number": "704215598307",
+    "project_id": "prai-2cd67",
+    "storage_bucket": "prai-2cd67.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:363290190285:android:e430a3714074ad10be6484",
+        "mobilesdk_app_id": "1:704215598307:android:6c4db583b3b56a76b5b1d6",
         "android_client_info": {
           "package_name": "com.prai.te"
         }
       },
       "oauth_client": [
         {
-          "client_id": "363290190285-ert394nbmm6t47h6jrsu92timto8j1ts.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.prai.te",
-            "certificate_hash": "402f186583003556486ccd4af78431728596f58b"
-          }
-        },
-        {
-          "client_id": "363290190285-i3jauveemc03hjhf2on2kv0dv624co11.apps.googleusercontent.com",
+          "client_id": "704215598307-57sh6dabf9j5b4tk7m39mv5s9kkbtdfu.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyALepnX-ntzKePYvjGSJZ8oXDzAbRWjM3Q"
+          "current_key": "AIzaSyDrS2W96soImnMF1C5Hp9o-eV1Mab3MHu4"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "363290190285-i3jauveemc03hjhf2on2kv0dv624co11.apps.googleusercontent.com",
+              "client_id": "704215598307-57sh6dabf9j5b4tk7m39mv5s9kkbtdfu.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "704215598307-i6rqeojb76tar28m4pokq4ufnmhe4bga.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "prai.PRAI"
+              }
             }
           ]
         }

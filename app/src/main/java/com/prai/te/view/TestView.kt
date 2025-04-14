@@ -57,6 +57,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prai.te.common.MainCodec
+import com.prai.te.common.MainFont
+import com.prai.te.common.textDp
 import com.prai.te.media.MainFileManager
 import com.prai.te.media.MainPlayer
 import com.prai.te.media.MockAudio
@@ -310,7 +312,8 @@ fun AlphaAnimationText() {
     // Text with animated alpha
     Text(
         text = "대화내용을 생성하고 있습니다",
-        fontSize = 15.sp,
+        fontSize = 15.textDp,
+        fontFamily = MainFont.Pretendard,
         color = Color.White.copy(alpha = alpha),
         modifier = Modifier.padding(16.dp)
     )

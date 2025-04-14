@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,20 +36,20 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
+import com.prai.te.common.MainColor
+import com.prai.te.common.MainFont
 import com.prai.te.common.MainTimeUtil
 import com.prai.te.common.cleanClickable
+import com.prai.te.common.textDp
 import com.prai.te.model.MainEvent
 import com.prai.te.retrofit.MainConversation
 import com.prai.te.retrofit.MainConversationMeta
 import com.prai.te.view.model.MainViewModel
-import kotlinx.coroutines.launch
 
-@Preview
 @Composable
 internal fun ConversationListView(model: MainViewModel = viewModel()) {
     val conversationList = model.chatList.collectAsStateWithLifecycle()
     val selectedId = model.selectedConversationId.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
     BackHandler {
         model.closeChatList()
     }
@@ -94,40 +94,85 @@ internal fun ConversationListView(model: MainViewModel = viewModel()) {
             }
             Text(
                 text = title,
-                fontSize = 18.sp,
-                lineHeight = 25.2.sp,
+                fontFamily = MainFont.Pretendard,
+                fontSize = 18.textDp,
+                lineHeight = 25.textDp,
                 fontWeight = FontWeight(600),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.align(Alignment.Center)
             )
         }
-        Crossfade(
-            targetState = selectedId.value,
-            label = "conversation_list_cross_fade",
-            modifier = Modifier.align(Alignment.TopCenter)
-        ) { selectedId ->
-            if (selectedId == null) {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .padding(top = 60.dp)
-                        .align(Alignment.TopCenter)
-                        .padding(20.dp)
-                ) {
-                    items(conversationList.value.size) { index ->
-                        ConversationTitleItem(conversationList.value[index]) {
-                            val itemId = conversationList.value[index].id
-                            scope.launch {
-                                model.event.emit(MainEvent.ConversationOpen(itemId))
+        if (conversationList.value.isEmpty()) {
+            EmptyScreen()
+        } else {
+            Crossfade(
+                targetState = selectedId.value,
+                label = "conversation_list_cross_fade",
+                modifier = Modifier.align(Alignment.TopCenter)
+            ) { selectedId ->
+                if (selectedId == null) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier
+                            .padding(top = 60.dp)
+                            .align(Alignment.TopCenter)
+                            .padding(20.dp)
+                    ) {
+                        items(conversationList.value.size) { index ->
+                            ConversationTitleItem(conversationList.value[index]) {
+                                val itemId = conversationList.value[index].id
+                                model.dispatchEvent(MainEvent.ConversationOpen(itemId))
+                                model.selectedConversationId.value = itemId
                             }
-                            model.selectedConversationId.value = itemId
                         }
                     }
+                } else {
+                    ConversationRoomView(selectedId)
                 }
-            } else {
-                ConversationRoomView(selectedId)
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun EmptyScreen() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .padding(top = 60.dp, bottom = 80.dp)
+            .fillMaxSize()
+            .background(color = Color(0xFF000000))
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Image(
+                painter = painterResource(R.drawable.main_icon_broken_egg),
+                contentDescription = null,
+                modifier = Modifier.padding(bottom = 30.dp)
+            )
+            Text(
+                text = "첫 대화를 기다리고 있어요!",
+                fontSize = 18.textDp,
+                lineHeight = 23.textDp,
+                fontFamily = MainFont.Pretendard,
+                fontWeight = FontWeight(600),
+                color = MainColor.Greyscale11WH,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = "지금 PRAI와 영어로\n가볍게 통화해 보세요!",
+                fontSize = 16.textDp,
+                lineHeight = 22.textDp,
+                fontFamily = MainFont.Pretendard,
+                fontWeight = FontWeight(400),
+                color = MainColor.Greyscale10BK,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
     }
 }
@@ -149,8 +194,9 @@ private fun ConversationTitleItem(meta: MainConversationMeta, onClick: () -> Uni
     ) {
         Text(
             text = MainTimeUtil.isoToFullCustom(meta.createdAt),
-            fontSize = 16.sp,
-            lineHeight = 22.4.sp,
+            fontSize = 16.textDp,
+            fontFamily = MainFont.Pretendard,
+            lineHeight = 22.textDp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             fontWeight = FontWeight(600),
@@ -165,8 +211,9 @@ private fun ConversationTitleItem(meta: MainConversationMeta, onClick: () -> Uni
         )
         Text(
             text = MainTimeUtil.secondToMinuteString(meta.duration),
-            fontSize = 16.sp,
-            lineHeight = 22.4.sp,
+            fontSize = 16.textDp,
+            fontFamily = MainFont.Pretendard,
+            lineHeight = 22.textDp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             fontWeight = FontWeight(600),
@@ -200,17 +247,19 @@ private fun ConversationRoomView(id: String = "test", model: MainViewModel = vie
     }
 }
 
-@Preview
 @Composable
 private fun AiChatItem(message: MainConversation = MockConversation) {
     Row(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.Start,
-        modifier = Modifier.padding(bottom = 26.dp).fillMaxWidth()
+        modifier = Modifier
+            .padding(bottom = 26.dp)
+            .fillMaxWidth()
     ) {
         Text(
             text = message.text,
             fontSize = 16.sp,
+            fontFamily = MainFont.Pretendard,
             lineHeight = 22.4.sp,
             fontWeight = FontWeight(400),
             color = Color(0xFFD2D2D2),
@@ -233,6 +282,7 @@ private fun AiChatItem(message: MainConversation = MockConversation) {
         Text(
             text = MainTimeUtil.isoToTimeCustom(message.timestamp),
             fontSize = 12.sp,
+            fontFamily = MainFont.Pretendard,
             lineHeight = 16.8.sp,
             fontWeight = FontWeight(400),
             color = Color(0xFF868686),
@@ -242,7 +292,6 @@ private fun AiChatItem(message: MainConversation = MockConversation) {
     }
 }
 
-@Preview
 @Composable
 private fun UserChatItem(message: MainConversation = MockConversation) {
     Row(
@@ -256,6 +305,7 @@ private fun UserChatItem(message: MainConversation = MockConversation) {
             text = MainTimeUtil.isoToTimeCustom(message.timestamp),
             fontSize = 12.sp,
             lineHeight = 16.8.sp,
+            fontFamily = MainFont.Pretendard,
             fontWeight = FontWeight(400),
             color = Color(0xFF868686),
             textAlign = TextAlign.Center,
@@ -264,6 +314,7 @@ private fun UserChatItem(message: MainConversation = MockConversation) {
         Text(
             text = message.text.trim(),
             fontSize = 16.sp,
+            fontFamily = MainFont.Pretendard,
             lineHeight = 22.4.sp,
             fontWeight = FontWeight(400),
             color = Color(0xFF000000),

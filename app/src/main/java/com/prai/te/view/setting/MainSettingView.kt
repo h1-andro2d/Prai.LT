@@ -1,7 +1,5 @@
 package com.prai.te.view.setting
 
-import android.content.Context
-import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,34 +29,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prai.te.R
 import com.prai.te.common.MainColor
-import com.prai.te.common.MainTimeUtil
+import com.prai.te.common.MainFont
+import com.prai.te.common.MainNavigator
 import com.prai.te.common.VerticalGap
 import com.prai.te.common.cleanClickable
 import com.prai.te.common.rippleClickable
-import com.prai.te.view.model.MainRepositoryViewModel
+import com.prai.te.common.textDp
 import com.prai.te.view.model.MainViewModel
+import com.prai.te.view.model.UserGender
 
-@Preview
 @Composable
 internal fun MainSettingView(
+    nameText: String,
+    ageText: String,
+    gender: UserGender?,
     model: MainViewModel = viewModel(),
-    repository: MainRepositoryViewModel = viewModel()
 ) {
-    val gender = repository.selectedGender.collectAsStateWithLifecycle()
-    val nameText = repository.nameText.collectAsStateWithLifecycle()
-    val birthDateText = repository.selectedBirthDateMills.collectAsStateWithLifecycle()
-
-    val infoText = if (birthDateText.value != null) {
-        "${gender.value.text} / ${MainTimeUtil.brithMillsToString(birthDateText.value)}"
-    } else {
-        gender.value.text
-    }
+    val infoText = "${gender?.text ?: "UNKNOWN"} / ${ageText}년생"
 
     BackHandler { model.isMainSettingVisible.value = false }
 
@@ -84,8 +74,9 @@ internal fun MainSettingView(
             )
             Text(
                 text = "마이페이지",
-                fontSize = 18.sp,
-                lineHeight = 25.2.sp,
+                fontSize = 18.textDp,
+                fontFamily = MainFont.Pretendard,
+                lineHeight = 25.textDp,
                 fontWeight = FontWeight(600),
                 color = Color(0xFFFFFFFF),
                 textAlign = TextAlign.Center,
@@ -95,7 +86,7 @@ internal fun MainSettingView(
         VerticalGap(20)
         ProfileView()
         VerticalGap(22)
-        NameText(nameText.value)
+        NameText(nameText)
         VerticalGap(3)
         InfoText(infoText)
         VerticalGap(30)
@@ -141,8 +132,9 @@ private fun ProfileView(model: MainViewModel = viewModel()) {
 private fun NameText(text: String) {
     Text(
         text = text,
-        fontSize = 18.sp,
-        lineHeight = 25.2.sp,
+        fontFamily = MainFont.Pretendard,
+        fontSize = 18.textDp,
+        lineHeight = 25.textDp,
         fontWeight = FontWeight(400),
         color = MainColor.Greyscale20WH,
     )
@@ -152,8 +144,9 @@ private fun NameText(text: String) {
 private fun InfoText(text: String) {
     Text(
         text = text,
-        fontSize = 18.sp,
-        lineHeight = 25.2.sp,
+        fontSize = 18.textDp,
+        fontFamily = MainFont.Pretendard,
+        lineHeight = 25.textDp,
         fontWeight = FontWeight(400),
         color = MainColor.Greyscale20WH,
     )
@@ -178,29 +171,15 @@ private fun ItemBox() {
             .background(color = MainColor.Greyscale02BK, shape = RoundedCornerShape(size = 16.dp))
     ) {
         SettingItem(R.drawable.main_setting_ask, "문의하기") {
-            startWebView(
-                context,
-                "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180e0af33e9fc1fdbd475"
-            )
+            MainNavigator.startAskWebView(context)
         }
         SettingItem(R.drawable.main_seeing_rule, "이용약관") {
-            startWebView(
-                context,
-                "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d01800f8961cb4ce9e9cc0f"
-            )
+            MainNavigator.startRuleWebView(context)
         }
         SettingItem(R.drawable.main_setting_privacy, "개인정보처리방침") {
-            startWebView(
-                context,
-                "https://humdrum-rosehip-5a9.notion.site/1af2f86a4d0180028c83e03d26aeceb6"
-            )
+            MainNavigator.startPrivacyWebView(context)
         }
     }
-}
-
-private fun startWebView(context: Context, url: String) {
-    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-    context.startActivity(intent)
 }
 
 @Preview
@@ -225,8 +204,9 @@ private fun SettingItem(
         )
         Text(
             text = text,
-            fontSize = 16.sp,
-            lineHeight = 22.4.sp,
+            fontSize = 16.textDp,
+            fontFamily = MainFont.Pretendard,
+            lineHeight = 22.textDp,
             fontWeight = FontWeight(400),
             color = MainColor.Greyscale19WH,
             modifier = Modifier.padding(start = 9.dp)

@@ -10,21 +10,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.prai.te.common.FadeView
+import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
 
 @Composable
-internal fun MainSettingRootView(model: MainViewModel = viewModel()) {
+internal fun MainSettingRootView(
+    model: MainViewModel = viewModel(),
+    repository: MainRepositoryViewModel = viewModel()
+) {
     val isProfileVisible = model.isProfileSettingVisible.collectAsStateWithLifecycle()
+    val nameText = repository.nameText.collectAsStateWithLifecycle()
+    val ageText = repository.ageText.collectAsStateWithLifecycle()
+    val gender = repository.selectedGender.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        MainSettingView()
+        MainSettingView(nameText.value, ageText.value, gender.value)
         AnimatedVisibility(
             visible = isProfileVisible.value,
             enter = fadeIn(),
             exit = fadeOut(animationSpec = tween(0))
         ) {
-            MainProfileSettingView()
+            MainProfileSettingView(nameText.value, ageText.value, gender.value)
         }
     }
 }

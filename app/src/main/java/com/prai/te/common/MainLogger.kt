@@ -33,6 +33,14 @@ internal sealed class MainLogger {
         override val tag = "VolumeReader"
     }
 
+    data object Activity : MainLogger() {
+        override val tag = "Activity"
+    }
+
+    data class View(private val name: String) : MainLogger() {
+        override val tag = name
+    }
+
     companion object {
         private const val MAIN_TAG = "MainLogger"
         private const val DELIMITER = "."
