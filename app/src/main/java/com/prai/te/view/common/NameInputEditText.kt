@@ -36,18 +36,17 @@ import kotlinx.coroutines.delay
 
 @Composable
 internal fun NameInputEditText(
-    nameText: String,
     autoFocus: Boolean = false,
     repository: MainRepositoryViewModel = viewModel()
 ) {
     val controller = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
 
-    var textFieldValue by remember(nameText) {
+    var textFieldValue by remember {
         mutableStateOf(
             TextFieldValue(
-                text = nameText,
-                selection = TextRange(nameText.length)
+                text = repository.nameText.value,
+                selection = TextRange(repository.nameText.value.length)
             )
         )
     }
@@ -61,10 +60,10 @@ internal fun NameInputEditText(
 
     TextField(
         value = textFieldValue,
-        onValueChange = { textFieldValue ->
-            val new = textFieldValue.text
-            if (new.length <= 20) {
-                repository.nameText.value = new
+        onValueChange = { inner ->
+            if (inner.text.length <= 20) {
+                textFieldValue = inner
+                repository.nameText.value = inner.text
             }
         },
         textStyle = androidx.compose.ui.text.TextStyle(

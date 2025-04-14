@@ -41,17 +41,16 @@ import kotlinx.coroutines.delay
 
 @Composable
 internal fun AgeInputEditText(
-    ageText: String,
     autoFocus: Boolean = false,
     repository: MainRepositoryViewModel = viewModel()
 ) {
     val controller = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
-    var textFieldValue by remember(ageText) {
+    var textFieldValue by remember {
         mutableStateOf(
             TextFieldValue(
-                text = ageText,
-                selection = TextRange(ageText.length)
+                text = repository.ageText.value,
+                selection = TextRange(repository.ageText.value.length)
             )
         )
     }
@@ -69,6 +68,7 @@ internal fun AgeInputEditText(
             onValueChange = { newValue ->
                 val newText = newValue.text
                 if (newText.length <= 2 && newText.all { it.isDigit() }) {
+                    textFieldValue = newValue
                     repository.ageText.value = newText
                 }
             },
@@ -86,7 +86,7 @@ internal fun AgeInputEditText(
         )
         Row {
             NumberBox(
-                digit = ageText.getOrNull(0),
+                digit = textFieldValue.text.getOrNull(0),
                 onClick = {
                     focusRequester.requestFocus()
                     controller?.show()
@@ -96,7 +96,7 @@ internal fun AgeInputEditText(
             Spacer(modifier = Modifier.width(6.dp))
 
             NumberBox(
-                digit = ageText.getOrNull(1),
+                digit = textFieldValue.text.getOrNull(1),
                 onClick = {
                     focusRequester.requestFocus()
                     controller?.show()

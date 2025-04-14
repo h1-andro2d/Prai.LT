@@ -131,8 +131,8 @@ private fun DialogBox(model: MainViewModel = viewModel()) {
                 model.launchDelayed(500L) {
                     model.isMainSettingVisible.value = false
                     model.isProfileSettingVisible.value = false
+                    model.initializeData()
                 }
-                model.initializeData()
             },
             onRightButtonClick = { model.isLogoutDialog.value = false },
             onBackHandler = { model.isLogoutDialog.value = false },
@@ -153,8 +153,8 @@ private fun DialogBox(model: MainViewModel = viewModel()) {
                 model.launchDelayed(500L) {
                     model.isMainSettingVisible.value = false
                     model.isProfileSettingVisible.value = false
+                    model.initializeData()
                 }
-                model.initializeData()
             },
             onRightButtonClick = { model.isDeleteUserDialog.value = false },
             onBackHandler = { model.isDeleteUserDialog.value = false },

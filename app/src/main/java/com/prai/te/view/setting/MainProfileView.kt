@@ -41,8 +41,6 @@ import com.prai.te.common.cleanClickable
 import com.prai.te.common.clearFocusCleanClickable
 import com.prai.te.common.clearFocusRippleClickable
 import com.prai.te.common.textDp
-import com.prai.te.model.MainEvent
-import com.prai.te.model.MainIntroState
 import com.prai.te.view.common.AgeInputEditText
 import com.prai.te.view.common.GenderSelection
 import com.prai.te.view.common.NameInputEditText
@@ -109,13 +107,13 @@ internal fun MainProfileSettingView(
             item { VerticalGap(20) }
             item { CategoryText("이름") }
             item { VerticalGap(16) }
-            item { NameInputEditText(nameText) }
+            item { NameInputEditText() }
             item { VerticalGap(40) }
             item { CategoryText("성별") }
             item { VerticalGap(16) }
             item { GenderSelection(gender) }
             item { VerticalGap(40) }
-            item { AgeTextBox(ageText) }
+            item { AgeTextBox() }
             item { VerticalGap(60) }
             item { LogOutRow() }
         }
@@ -185,7 +183,7 @@ private fun CategoryText(text: String = "이름") {
 }
 
 @Composable
-private fun AgeTextBox(ageText: String) {
+private fun AgeTextBox() {
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -203,7 +201,7 @@ private fun AgeTextBox(ageText: String) {
             color = MainColor.Greyscale18WH,
         )
         Spacer(modifier = Modifier.weight(1f))
-        AgeInputEditText(ageText)
+        AgeInputEditText()
         Text(
             text = "년",
             fontSize = 16.textDp,

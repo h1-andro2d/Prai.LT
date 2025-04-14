@@ -104,7 +104,7 @@ internal fun OnboardingView(
                 .padding(top = 87.dp)
                 .fillMaxSize()
         ) {
-            View1(name.value)
+            View1()
         }
         AnimatedVisibility(
             visible = currentPage == 1,
@@ -211,7 +211,7 @@ private fun NextButtonInactive(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun View1(nameText: String) {
+private fun View1() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
@@ -233,7 +233,7 @@ private fun View1(nameText: String) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(bottom = 26.dp)
         )
-        NameInputEditText(nameText, autoFocus = true)
+        NameInputEditText(autoFocus = true)
     }
 }
 
@@ -288,7 +288,7 @@ private fun View3(ageText: String) {
             modifier = Modifier.padding(bottom = 26.dp)
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AgeInputEditText(ageText, autoFocus = true)
+            AgeInputEditText(autoFocus = true)
             Text(
                 text = "년",
                 fontSize = 16.textDp,
