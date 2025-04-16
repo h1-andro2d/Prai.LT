@@ -156,6 +156,7 @@ internal class MainViewModel : ViewModel() {
     }
 
     fun updateSegmentItemList(items: List<CallSegmentItem>) {
+        currentSegment.value = items.getOrNull(0)
         segmentItemList.value = items
     }
 

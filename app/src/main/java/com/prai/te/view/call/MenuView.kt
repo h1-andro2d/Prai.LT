@@ -45,6 +45,7 @@ import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
 import com.prai.te.common.textDp
 import com.prai.te.model.MainCallState
+import com.prai.te.view.model.CallSegmentItem
 import com.prai.te.view.model.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -52,6 +53,7 @@ import kotlinx.coroutines.isActive
 @Preview
 @Composable
 internal fun MenuRowView(
+    currentSegment: CallSegmentItem? = null,
     isRecording: Boolean = true,
     state: MainCallState = MainCallState.Active("test"),
     modifier: Modifier = Modifier,
@@ -91,6 +93,7 @@ internal fun MenuRowView(
                     is MainCallState.Connecting -> Unit
                     is MainCallState.None -> CallIconWithAnimation(callIconSize, callIconRootSize)
                     is MainCallState.Active -> MicIconWithAnimation(
+                        currentSegment,
                         isRecording,
                         micIconSize,
                         micIconRootSize
@@ -179,33 +182,36 @@ internal fun MenuOverlayView(model: MainViewModel = viewModel()) {
 @Preview
 @Composable
 private fun MicIconWithAnimation(
+    currentSegment: CallSegmentItem? = null,
     isRecording: Boolean = true,
     iconSize: Dp = 90.dp,
     rootSize: Dp = 97.dp,
     model: MainViewModel = viewModel()
 ) {
-    Crossfade(
-        targetState = isRecording,
-        label = "mic_cross_fade"
-    ) { isRecording ->
-        if (isRecording) {
-            MicActiveIconWithAnimation(
-                iconSize,
-                rootSize,
-                Modifier
-            )
-        } else {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(rootSize)
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.main_mic_waiting),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .cleanClickable { model.sendRecordingRequest() }
-                        .size(iconSize)
+    FadeView(currentSegment == null) {
+        Crossfade(
+            targetState = isRecording,
+            label = "mic_cross_fade"
+        ) { isRecording ->
+            if (isRecording) {
+                MicActiveIconWithAnimation(
+                    iconSize,
+                    rootSize,
+                    Modifier
                 )
+            } else {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(rootSize)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.main_mic_waiting),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .cleanClickable { model.sendRecordingRequest() }
+                            .size(iconSize)
+                    )
+                }
             }
         }
     }

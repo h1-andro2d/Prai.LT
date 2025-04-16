@@ -207,6 +207,7 @@ internal fun CallView(model: MainViewModel = viewModel()) {
                 .align(Alignment.BottomCenter)
         ) {
             MenuRowView(
+                currentSegment.value,
                 isRecording = isRecording.value,
                 state = state.value,
                 modifier = Modifier
