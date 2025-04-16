@@ -22,7 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +58,8 @@ internal fun MainProfileSettingView(
     model: MainViewModel = viewModel(),
     repository: MainRepositoryViewModel = viewModel()
 ) {
+    var isCacheReady by remember { mutableStateOf(false) }
+
     BackHandler {
         model.isProfileSettingVisible.value = false
         repository.rollbackProfileSetting()
@@ -63,10 +67,21 @@ internal fun MainProfileSettingView(
 
     LaunchedEffect(Unit) {
         repository.makeProfileSettingCache()
+        isCacheReady = true
     }
 
-    val buttonActive by remember(nameText, ageText) {
-        derivedStateOf { nameText != "" && ageText.length == 2 }
+    val buttonActive by remember(nameText, ageText, gender, isCacheReady) {
+        derivedStateOf {
+            if (isCacheReady) {
+                (nameText.isNotEmpty() && ageText.length == 2) && (
+                        nameText != repository.nameCache ||
+                                ageText != repository.ageCache ||
+                                gender != repository.genderCache
+                        )
+            } else {
+                false
+            }
+        }
     }
 
     Box(

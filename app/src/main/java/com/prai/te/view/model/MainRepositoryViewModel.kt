@@ -32,9 +32,9 @@ internal class MainRepositoryViewModel(application: Application) : AndroidViewMo
     private var vibeSettingCache = selectedVibeSettingItem.value
 
     private var birthDateCache = selectedBirthDateMills.value
-    private var ageCache = ageText.value
-    private var genderCache = selectedGender.value
-    private var nameCache = nameText.value
+    var ageCache = ageText.value
+    var genderCache = selectedGender.value
+    var nameCache = nameText.value
 
     fun reset() {
         ageText.value = ""
