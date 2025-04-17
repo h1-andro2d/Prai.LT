@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
-import androidx.compose.animation.Crossfade
+import android.widget.VideoView
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -13,61 +13,94 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.penfeizhou.animation.apng.APNGDrawable
 import com.github.penfeizhou.animation.loader.ResourceStreamLoader
 import com.prai.te.R
 import com.prai.te.common.FadeView
+import com.prai.te.common.cleanClickable
 import com.prai.te.model.MainCallState
 import com.prai.te.view.model.CallSegmentItem
+import com.prai.te.view.model.MainViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-internal fun TalkerBox(segment: CallSegmentItem?, state: MainCallState, modifier: Modifier) {
+internal fun TalkerBox(
+    segment: CallSegmentItem?,
+    state: MainCallState,
+    modifier: Modifier,
+    model: MainViewModel = viewModel()
+) {
     val imageSize = 150.dp
     val initialRadius = with(LocalDensity.current) { imageSize.toPx() / 2 - 10f }
 
+    // Video와 Image의 alpha 애니메이션
+    val videoAlpha = remember { Animatable(if (state is MainCallState.Active) 1f else 0f) }
+    val imageAlpha = remember { Animatable(if (state is MainCallState.Active) 0f else 1f) }
+
+    // state 변경 시 alpha 애니메이션
+    LaunchedEffect(state) {
+        if (state is MainCallState.Active) {
+            videoAlpha.animateTo(1f, animationSpec = tween(100, easing = LinearEasing))
+            imageAlpha.animateTo(0f, animationSpec = tween(100, easing = LinearEasing))
+        } else {
+            videoAlpha.animateTo(0f, animationSpec = tween(100, easing = LinearEasing))
+            imageAlpha.animateTo(1f, animationSpec = tween(100, easing = LinearEasing))
+        }
+    }
+
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.size(383.dp)
+        modifier = modifier
+            .cleanClickable {
+                // 주석 처리된 기존 로직 유지
+                if (model.callState.value == MainCallState.Connecting) {
+                    model.callState.value = MainCallState.Active("")
+                } else {
+                    model.callState.value = MainCallState.Connecting
+                }
+            }
+            .size(383.dp)
     ) {
+        Box(
+            contentAlignment = Alignment.Center,
+
+
+            modifier = Modifier.size(180.dp)
+        ) {
+            VideoLoopScreen(state = state, alpha = videoAlpha.value, videoAlphaAnimatable = videoAlpha)
+            Image(
+                painter = painterResource(R.drawable.main_talker_waiting),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(imageSize)
+                    .alpha(imageAlpha.value)
+            )
+        }
         if (state != MainCallState.None) {
             GrowingCircle(segment, state, initialRadius = initialRadius, initialDelay = 0)
             GrowingCircle(segment, state, initialRadius = initialRadius, initialDelay = 1000)
             GrowingCircle(segment, state, initialRadius = initialRadius, initialDelay = 2000)
-        }
-        Crossfade(state, label = "talker_box_crosss_fade") { state ->
-            when (state) {
-                MainCallState.None,
-                MainCallState.Connecting -> Image(
-                    painter = painterResource(R.drawable.main_talker_waiting),
-                    contentDescription = null,
-                    modifier = Modifier.size(imageSize)
-                )
-
-                is MainCallState.Active -> Image(
-                    painter = painterResource(R.drawable.main_talker_active),
-                    contentDescription = null,
-                    modifier = Modifier.size(imageSize)
-                )
-            }
         }
     }
 }
@@ -119,12 +152,6 @@ private fun GrowingCircle(
     }
 }
 
-@Preview
-@Composable
-private fun ImageViewPreview() {
-    LocalApngImage(R.raw.image)
-}
-
 @Composable
 private fun LocalApngImage(resourceId: Int, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -158,4 +185,53 @@ private fun drawableToBitmap(drawable: Drawable): Bitmap {
     drawable.draw(canvas)
 
     return bitmap
+}
+
+@Composable
+private fun VideoLoopScreen(state: MainCallState, alpha: Float, videoAlphaAnimatable: Animatable<Float, *>) {
+    val context = LocalContext.current
+    val videoUri = "android.resource://${context.packageName}/raw/main_talker_video".toUri()
+
+    // VideoView를 단일 인스턴스로 유지
+    val videoView = remember {
+        VideoView(context).apply {
+            setVideoURI(videoUri)
+            setOnPreparedListener { mediaPlayer ->
+                mediaPlayer.isLooping = true
+                // 비디오가 준비되면 즉시 재생 시작 (상태에 따라 제어)
+                if (state is MainCallState.Active) {
+                    mediaPlayer.start()
+                }
+            }
+        }
+    }
+
+    // 애니메이션 완료 후 pause 지연
+    LaunchedEffect(videoAlphaAnimatable.value) {
+        if (videoAlphaAnimatable.value == 0f && state !is MainCallState.Active) {
+            // 애니메이션이 0에 도달했을 때 pause
+            videoView.pause()
+        }
+    }
+
+    AndroidView(
+        modifier = Modifier
+            .size(180.dp)
+            .alpha(alpha),
+        factory = { videoView },
+        update = { view ->
+            if (state is MainCallState.Active) {
+                if (!view.isPlaying) {
+                    view.start()
+                }
+            }
+            // pause는 LaunchedEffect에서 처리하므로 여기서는 호출하지 않음
+        }
+    )
+
+    DisposableEffect(Unit) {
+        onDispose {
+            videoView.stopPlayback()
+        }
+    }
 }
