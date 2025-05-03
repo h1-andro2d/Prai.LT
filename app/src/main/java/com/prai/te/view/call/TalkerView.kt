@@ -17,6 +17,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,11 +75,11 @@ internal fun TalkerBox(
         modifier = modifier
             .cleanClickable {
                 // 주석 처리된 기존 로직 유지
-                if (model.callState.value == MainCallState.Connecting) {
-                    model.callState.value = MainCallState.Active("")
-                } else {
-                    model.callState.value = MainCallState.Connecting
-                }
+//                if (model.callState.value == MainCallState.Connecting) {
+//                    model.callState.value = MainCallState.Active("")
+//                } else {
+//                    model.callState.value = MainCallState.Connecting
+//                }
             }
             .size(383.dp)
     ) {
@@ -192,25 +193,32 @@ private fun VideoLoopScreen(state: MainCallState, alpha: Float, videoAlphaAnimat
     val context = LocalContext.current
     val videoUri = "android.resource://${context.packageName}/raw/main_talker_video".toUri()
 
+    // 생명주기 상태 추적
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
+
     // VideoView를 단일 인스턴스로 유지
     val videoView = remember {
         VideoView(context).apply {
             setVideoURI(videoUri)
             setOnPreparedListener { mediaPlayer ->
                 mediaPlayer.isLooping = true
-                // 비디오가 준비되면 즉시 재생 시작 (상태에 따라 제어)
-                if (state is MainCallState.Active) {
-                    mediaPlayer.start()
-                }
             }
         }
     }
 
-    // 애니메이션 완료 후 pause 지연
-    LaunchedEffect(videoAlphaAnimatable.value) {
-        if (videoAlphaAnimatable.value == 0f && state !is MainCallState.Active) {
-            // 애니메이션이 0에 도달했을 때 pause
-            videoView.pause()
+    // 생명주기와 상태에 따른 비디오 재생 제어
+    LaunchedEffect(lifecycleState, state) {
+        // 앱이 포그라운드에 있고 Active 상태일 때만 재생
+        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED) && state is MainCallState.Active) {
+            if (!videoView.isPlaying) {
+                videoView.start()
+            }
+        } else {
+            // 그 외의 경우 일시 중지
+            if (videoView.isPlaying) {
+                videoView.pause()
+            }
         }
     }
 
@@ -219,16 +227,10 @@ private fun VideoLoopScreen(state: MainCallState, alpha: Float, videoAlphaAnimat
             .size(180.dp)
             .alpha(alpha),
         factory = { videoView },
-        update = { view ->
-            if (state is MainCallState.Active) {
-                if (!view.isPlaying) {
-                    view.start()
-                }
-            }
-            // pause는 LaunchedEffect에서 처리하므로 여기서는 호출하지 않음
-        }
+        update = { /* 업데이트 로직은 LaunchedEffect에서 처리 */ }
     )
 
+    // 리소스 정리
     DisposableEffect(Unit) {
         onDispose {
             videoView.stopPlayback()

@@ -67,6 +67,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
+                                                <entry key="color" value="000000" />
                                                 <entry key="imagePath" value="/private/var/folders/mh/9m0nzmfs3mv20lmqrh_8h3b40000gn/T/ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
@@ -79,8 +80,8 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="$USER_HOME$/Downloads/prai (1)/drawable-xhdpi/main_app_icon.webp" />
-                                                <entry key="scalingPercent" value="69" />
+                                                <entry key="imagePath" value="$USER_HOME$/Downloads/logo_and_512/drawable-xhdpi/prai_main_app_icon.webp" />
+                                                <entry key="scalingPercent" value="91" />
                                               </map>
                                             </option>
                                           </PersistentState>

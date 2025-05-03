@@ -48,15 +48,15 @@ internal class MainVolumeReader(private val scope: CoroutineScope) {
         ) {
             return
         }
-        recorder = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufferSize
-        )
-        val buffer = ShortArray(bufferSize)
         try {
+            recorder = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize
+            )
+            val buffer = ShortArray(bufferSize)
             recorder?.startRecording()
             job = scope.launch {
                 while (isActive) {
