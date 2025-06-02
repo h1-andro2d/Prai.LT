@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -28,13 +30,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.MainColor
 import com.prai.te.common.MainFont
@@ -43,6 +51,7 @@ import com.prai.te.common.cleanClickable
 import com.prai.te.common.clearFocusCleanClickable
 import com.prai.te.common.clearFocusRippleClickable
 import com.prai.te.common.textDp
+import com.prai.te.model.MainOutCase
 import com.prai.te.view.common.AgeInputEditText
 import com.prai.te.view.common.GenderSelection
 import com.prai.te.view.common.NameInputEditText
@@ -50,11 +59,12 @@ import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
 import com.prai.te.view.model.UserGender
 
+@Preview
 @Composable
 internal fun MainProfileSettingView(
-    nameText: String,
-    ageText: String,
-    gender: UserGender?,
+    nameText: String = "TEST",
+    ageText: String = "95",
+    gender: UserGender? = UserGender.MALE,
     model: MainViewModel = viewModel(),
     repository: MainRepositoryViewModel = viewModel()
 ) {
@@ -65,6 +75,12 @@ internal fun MainProfileSettingView(
         repository.rollbackProfileSetting()
     }
 
+    LaunchedEffect(Unit) {
+        Firebase.analytics.logEvent(
+            "custom_screen_view",
+            bundleOf("screen_name" to "profile_setting")
+        )
+    }
     LaunchedEffect(Unit) {
         repository.makeProfileSettingCache()
         isCacheReady = true
@@ -88,6 +104,7 @@ internal fun MainProfileSettingView(
         modifier = Modifier
             .clearFocusCleanClickable()
             .fillMaxSize()
+            .cleanClickable {}
             .background(color = Color(0xFF000000))
     ) {
         Box(
@@ -260,7 +277,7 @@ private fun LogOutRow(model: MainViewModel = viewModel()) {
             color = MainColor.Greyscale13WH,
             modifier = Modifier.cleanClickable {
                 controller?.hide()
-                model.isDeleteUserDialog.value = true
+                model.outCase.value = MainOutCase.DELETE_USER
             }
         )
     }

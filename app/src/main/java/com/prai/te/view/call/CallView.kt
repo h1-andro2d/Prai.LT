@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,8 +39,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.FadeView
 import com.prai.te.common.MainFont
@@ -48,7 +52,7 @@ import com.prai.te.common.textDp
 import com.prai.te.model.MainCallState
 import com.prai.te.view.AlphaAnimationText
 import com.prai.te.view.LoadingDotAnimation2
-import com.prai.te.view.common.TwoButtonDialog
+import com.prai.te.view.common.dialog.TwoButtonDialog
 import com.prai.te.view.model.MainViewModel
 
 @Composable
@@ -84,6 +88,29 @@ internal fun CallView(model: MainViewModel = viewModel()) {
         }
     }
 
+    LaunchedEffect(state.value) {
+        when (state.value) {
+            is MainCallState.Connected -> {
+                Firebase.analytics.logEvent(
+                    "custom_screen_view",
+                    bundleOf("screen_name" to "call_connected")
+                )
+            }
+
+            MainCallState.Connecting ->
+                Firebase.analytics.logEvent(
+                    "custom_screen_view",
+                    bundleOf("screen_name" to "call_connecting")
+                )
+
+            MainCallState.None ->
+                Firebase.analytics.logEvent(
+                    "custom_screen_view",
+                    bundleOf("screen_name" to "call_main")
+                )
+        }
+    }
+
     val shouldBlur = isSettingOverlayVisible.value ||
             isTranslationOverlayVisible.value ||
             isCallEndDialog.value ||
@@ -93,6 +120,7 @@ internal fun CallView(model: MainViewModel = viewModel()) {
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.navigationBars)
             .fillMaxSize()
+            .cleanClickable {}
             .graphicsLayer {
                 renderEffect = if (shouldBlur) blurEffect else null
             }
@@ -122,7 +150,7 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             )
         }
         FadeView(
-            visible = state.value is MainCallState.Active,
+            visible = state.value is MainCallState.Connected,
             modifier = Modifier
                 .padding(top = 113.dp)
                 .align(Alignment.TopCenter)
@@ -143,7 +171,7 @@ internal fun CallView(model: MainViewModel = viewModel()) {
             )
         }
         FadeView(
-            visible = state.value is MainCallState.Active && currentSegment.value != null,
+            visible = state.value is MainCallState.Connected && currentSegment.value != null,
             modifier = Modifier
                 .padding(top = 408.dp)
                 .align(Alignment.TopCenter)
@@ -237,7 +265,20 @@ internal fun CallView(model: MainViewModel = viewModel()) {
                 model.onCallEnd()
                 model.isCallEndingDialog.value = false
             },
-            onRightButtonClick = { model.isCallEndingDialog.value = false },
+            onRightButtonClick = {
+                model.isCallEndingDialog.value = false
+                val state = state.value
+                if (state is MainCallState.Connected && model.callResponseWaiting.value == true) {
+                    val diff = model.waitingStartTime - System.currentTimeMillis()
+                    Firebase.analytics.logEvent(
+                        "call_exited_before_response",
+                        bundleOf(
+                            "conversation_id" to state.conversationId,
+                            "elapsed_seconds" to diff
+                        )
+                    )
+                }
+            },
             onBackHandler = { model.isCallEndingDialog.value = false }
         )
     }
@@ -307,7 +348,12 @@ internal fun CallView(model: MainViewModel = viewModel()) {
 
 @Composable
 private fun TimeText(model: MainViewModel = viewModel()) {
-    val seconds = model.callTime.collectAsStateWithLifecycle()
+    val isFreeTrialCall = model.isFreeTrialCall.collectAsStateWithLifecycle()
+    val seconds = if (isFreeTrialCall.value) {
+        model.freeTrialCallTime.collectAsStateWithLifecycle()
+    } else {
+        model.callTime.collectAsStateWithLifecycle()
+    }
     val minutes = seconds.value / 60
     val remainingSeconds = seconds.value % 60
     Text(

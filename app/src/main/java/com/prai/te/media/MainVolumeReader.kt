@@ -69,7 +69,7 @@ internal class MainVolumeReader(private val scope: CoroutineScope) {
                 }
             }
         } catch (exception: Exception) {
-            MainLogger.VolumeReader.log("error: startReading, exception: $exception")
+            MainLogger.VolumeReader.log(exception, "error: startReading, exception: $exception")
         }
     }
 
@@ -96,7 +96,7 @@ internal class MainVolumeReader(private val scope: CoroutineScope) {
             stop()
             release()
         } catch (exception: Exception) {
-            MainLogger.VolumeReader.log("error: tryRelease, exception: $exception")
+            MainLogger.VolumeReader.log(exception, "error: tryRelease, exception: $exception")
         }
     }
 

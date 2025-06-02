@@ -41,8 +41,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
@@ -67,6 +70,10 @@ internal fun AiSettingView(
 
     LaunchedEffect(Unit) {
         repository.makeAiSettingCache()
+    }
+
+    LaunchedEffect(Unit) {
+        Firebase.analytics.logEvent("custom_screen_view", bundleOf("screen_name" to "voice_setting"))
     }
 
     Box(

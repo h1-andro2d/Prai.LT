@@ -1,6 +1,5 @@
 package com.prai.te.view.call
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -28,9 +27,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
@@ -45,6 +46,10 @@ internal fun RecordingView(model: MainViewModel = viewModel()) {
     val seconds = model.recordTime.collectAsStateWithLifecycle()
     val minutes = seconds.value / 60
     val remainingSeconds = seconds.value % 60
+
+    LaunchedEffect(Unit) {
+        Firebase.analytics.logEvent("custom_screen_view", bundleOf("screen_name" to "call_recording"))
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

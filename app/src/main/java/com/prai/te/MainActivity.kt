@@ -12,25 +12,35 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.os.bundleOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.android.billingclient.api.Purchase
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.auth.MainAuthManager
+import com.prai.te.billing.MainBillingManager
 import com.prai.te.common.MainCodec
 import com.prai.te.common.MainLogger
 import com.prai.te.media.MainFileManager
 import com.prai.te.media.MainPlayer
 import com.prai.te.media.MainRecorder
 import com.prai.te.media.MainVolumeReader
+import com.prai.te.model.MainBillingState
 import com.prai.te.model.MainCallState
 import com.prai.te.model.MainEvent
 import com.prai.te.model.MainIntroState
+import com.prai.te.model.MainPremiumPlan
 import com.prai.te.permission.MainPermission
 import com.prai.te.permission.MainPermissionHandler
 import com.prai.te.retrofit.MainCallSegment
 import com.prai.te.retrofit.MainRetrofit
-import com.prai.te.retrofit.MainUserInfo
+import com.prai.te.retrofit.MainRetrofit.Event
+import com.prai.te.security.MainSecurityManager
 import com.prai.te.view.RootView
+import com.prai.te.view.model.BillingMessage
 import com.prai.te.view.model.CallSegmentItem
 import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
@@ -50,8 +60,9 @@ class MainActivity : ComponentActivity() {
     private val repository: MainRepositoryViewModel by viewModels()
     private val authManager: MainAuthManager by lazy { MainAuthManager(scope) }
     private val recorder: MainRecorder by lazy { MainRecorder(scope) }
-    private val retrofit: MainRetrofit by lazy { MainRetrofit(scope) }
+    private val retrofit: MainRetrofit by lazy { MainRetrofit(scope, authManager) }
     private val player: MainPlayer by lazy { MainPlayer(scope) }
+    private val billingManager: MainBillingManager by lazy { MainBillingManager(this, retrofit) }
     private val volumeReader: MainVolumeReader by lazy { MainVolumeReader(scope) }
 
     private val transparent = Color.Transparent.toArgb()
@@ -95,6 +106,7 @@ class MainActivity : ComponentActivity() {
         )
         overridePendingTransition(0, 0)
         authManager.initialize(this)
+        billingManager.initialize()
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         collectMainEvent()
         collectAuthEvent()
@@ -104,13 +116,17 @@ class MainActivity : ComponentActivity() {
         collectVolumeReaderEvent()
         collectViewState()
         collectRepositoryEvent()
+        collectBillingEvent()
         checkMinimumVersion()
+        checkPremiumUser()
         MainScope().launch { checkCredentialState {} }
+        MainSecurityManager.checkAppIntegrity(this)
     }
 
     private suspend fun checkCredentialState(onEnd: () -> Unit) {
         if (MainAuthManager.isConnected().not()) {
             withContext(Dispatchers.Main) {
+                authManager.disconnect()
                 viewModel.introState.value = MainIntroState.LOGIN
             }
             MainLogger.Activity.log("checkCredentialState: not connected")
@@ -121,6 +137,7 @@ class MainActivity : ComponentActivity() {
             if (token == null) {
                 MainLogger.Activity.log("checkCredentialState: fail to get AuthToken")
                 withContext(Dispatchers.Main) {
+                    authManager.disconnect()
                     viewModel.isServerErrorDialog.value = true
                     viewModel.introState.value = MainIntroState.LOGIN
                     onEnd.invoke()
@@ -139,6 +156,7 @@ class MainActivity : ComponentActivity() {
             if (event is MainRetrofit.Event.UserInfoResponse) {
                 MainLogger.Activity.log("checkCredentialState: user info success")
                 withContext(Dispatchers.Main) {
+                    retrofit.getPremiumInfoSuspend()
                     repository.updateServerUserInfo(event.response)
                     viewModel.introState.value = MainIntroState.DONE
                     onEnd.invoke()
@@ -147,6 +165,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 MainLogger.Activity.log("checkCredentialState: USER API ERROR")
                 withContext(Dispatchers.Main) {
+                    authManager.disconnect()
                     viewModel.isServerErrorDialog.value = true
                     viewModel.introState.value = MainIntroState.LOGIN
                     onEnd.invoke()
@@ -158,6 +177,10 @@ class MainActivity : ComponentActivity() {
 
     private fun checkMinimumVersion() {
         retrofit.getMinimumVersion()
+    }
+
+    private fun checkPremiumUser() {
+        retrofit.getPremiumInfo()
     }
 
     private fun collectAuthEvent() {
@@ -180,9 +203,12 @@ class MainActivity : ComponentActivity() {
 
             }
 
+            is MainAuthManager.Event.AuthError,
+            MainAuthManager.Event.NetworkError,
             MainAuthManager.Event.Error -> { // TODO: Divide cancel logic and error logic
                 checkGooglePlayServices()
                 delay(1200L)
+                authManager.disconnect()
                 withContext(Dispatchers.Main) {
                     viewModel.isServerErrorDialog.value = true
                     viewModel.isLoginProcessing.value = false
@@ -197,8 +223,11 @@ class MainActivity : ComponentActivity() {
             }
 
             MainAuthManager.Event.NoCredential -> {
+                authManager.disconnect()
                 startAddAccountActivity()
             }
+
+            else -> Unit
         }
     }
 
@@ -233,13 +262,16 @@ class MainActivity : ComponentActivity() {
                     scope.launch {
                         try {
                             handleMainEvent(event)
-                        } catch (e: Exception) {
-                            MainLogger.Activity.log("Error handling event: ${e.message}")
+                        } catch (exception: Exception) {
+                            MainLogger.Activity.log(
+                                exception,
+                                "Error handling event: ${exception.message}"
+                            )
                         }
                     }
                 }
             } catch (e: Exception) {
-                MainLogger.Activity.log("Error collecting events: ${e.message}")
+                MainLogger.Activity.log(e, "Error collecting events: ${e.message}")
             }
         }
     }
@@ -285,6 +317,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            is MainEvent.SomethingOutClick -> {
+                retrofit.sendCancellationReason(event.message)
+            }
+
             is MainEvent.RegisterUserRequest -> {
                 withContext(Dispatchers.Main) {
                     viewModel.isRegisterProcessing.value = true
@@ -301,29 +337,159 @@ class MainActivity : ComponentActivity() {
             }
 
             is MainEvent.CallStart -> {
-                val token = authManager.getAuthToken()
-                val userId = repository.userId
-                if (token != null && userId != null) {
-                    retrofit.sendFirstCallRequest(
-                        token,
-                        userId,
-                        repository.selectedVoiceSettingItem.value.code,
-                        repository.selectedVibeSettingItem.value.code,
-                        repository.selectedVoiceSpeed.value
-                    )
-                } else {
-                    withContext(Dispatchers.Main) {
-                        viewModel.callState.value = MainCallState.None
-                        viewModel.isServerErrorDialog.value = true
-                    }
-                }
+                handleFirstCallStart()
             }
 
             is MainEvent.CallEnd -> player.stop()
             is MainEvent.ConversationListOpen -> requestConversationList()
             is MainEvent.ConversationOpen -> retrofit.getConversation(event.id)
             is MainEvent.TranslationRequest -> retrofit.getTranslation(event.text)
+            is MainEvent.BillingItemClick -> {
+                withContext(Dispatchers.IO) {
+                    doBilling(event.plan)
+                }
+            }
+
+            is MainEvent.BillingRecoverClick -> {
+                withContext(Dispatchers.IO) {
+                    recoverBilling()
+                }
+            }
         }
+    }
+
+    private suspend fun handleFirstCallStart() {
+        val result = retrofit.getPremiumInfoSuspend()
+        if (result == null) {
+            viewModel.isServerErrorDialog.value = true
+            return
+        }
+        if (result.premium) {
+            startPremiumCall()
+        } else {
+            startFreeTrialCall()
+        }
+    }
+
+    private suspend fun startPremiumCall() {
+        viewModel.isFreeTrialCall.value = false
+        startActualCall()
+    }
+
+    private suspend fun startActualCall() {
+        viewModel.onCallStart()
+        val token = authManager.getAuthToken()
+        val userId = repository.userId
+        if (token != null && userId != null) {
+            retrofit.sendFirstCallRequest(
+                token,
+                userId,
+                repository.selectedVoiceSettingItem.value.code,
+                repository.selectedVibeSettingItem.value.code,
+                repository.selectedVoiceSpeed.value
+            )
+        } else {
+            withContext(Dispatchers.Main) {
+                viewModel.callState.value = MainCallState.None
+                viewModel.isServerErrorDialog.value = true
+            }
+        }
+    }
+
+    private suspend fun startFreeTrialCall() {
+        viewModel.isFreeTrialCall.value = true
+        if (repository.canStartFreeTrial()) {
+            startActualCall()
+        } else {
+            viewModel.isBillingVisible.value = true
+        }
+    }
+
+    private suspend fun doBilling(plan: MainPremiumPlan) {
+        viewModel.billingMessage.value = BillingMessage.BILLING_PROCESSING
+        val result = retrofit.getPremiumInfoSuspend()
+        if (result == null) {
+            showBillingMessage(BillingMessage.PRAI_SERVER_ERROR)
+            return
+        }
+        if (result.premium) {
+            showBillingMessage(BillingMessage.ALREADY_PREMIUM)
+            return
+        } else {
+            if (viewModel.billingItems.value.isEmpty()) {
+                billingManager.initialize()
+                showBillingMessage(BillingMessage.GOOGLE_PLAY_NO_ITEM)
+                return
+            }
+            val purchaseList = billingManager.queryPurchasesSuspend()
+            if (purchaseList?.any { it.purchaseState == Purchase.PurchaseState.PENDING } == true) {
+                showBillingMessage(BillingMessage.PENDING)
+                return
+            }
+            if (purchaseList?.any { it.purchaseState == Purchase.PurchaseState.PURCHASED } == true) {
+                showBillingMessage(BillingMessage.ALREADY_HAVE_PURCHASE)
+                retrofit.getPremiumInfo()
+                return
+            } else {
+                if (plan == MainPremiumPlan.YEAR) {
+                    billingManager.launchBillingFlow("prai_subscription_year")
+                } else {
+                    billingManager.launchBillingFlow("prai_subscription_month")
+                }
+                return
+            }
+        }
+    }
+
+    private suspend fun recoverBilling() {
+        viewModel.billingMessage.value = BillingMessage.RECOVER_PROCESSING
+        val result = retrofit.getPremiumInfoSuspend()
+        if (result == null) {
+            showBillingMessage(BillingMessage.PRAI_SERVER_ERROR)
+            return
+        }
+        if (result.premium) {
+            showBillingMessage(BillingMessage.ALREADY_PREMIUM)
+            return
+        } else {
+            if (viewModel.billingItems.value.isEmpty()) {
+                billingManager.initialize()
+                showBillingMessage(BillingMessage.GOOGLE_PLAY_NO_ITEM)
+                return
+            }
+            val purchases = billingManager.queryPurchasesSuspend()
+            if (purchases.isNullOrEmpty()) {
+                showBillingMessage(BillingMessage.RECOVER_NO_ITEM)
+                return
+            }
+            if (purchases.any { it.purchaseState == Purchase.PurchaseState.PENDING } == true) {
+                showBillingMessage(BillingMessage.PENDING)
+                return
+            }
+            val resultList = mutableListOf<Event.PaymentEnrollResponse>()
+            purchases.forEach { purchase ->
+                val result = retrofit.enrollPaymentSuspend(
+                    productId = purchase.products.getOrNull(0),
+                    purchaseToken = purchase.purchaseToken
+                )
+                if (result != null) {
+                    resultList.add(result)
+                }
+            }
+            if (resultList.isNotEmpty()) {
+                viewModel.isRecoverSuccessDialog.value = true
+                return
+            } else {
+                showBillingMessage(BillingMessage.RECOVER_ALREADY_USED)
+                return
+            }
+        }
+    }
+
+    private suspend fun showBillingMessage(message: BillingMessage) {
+        viewModel.billingMessage.value = message
+        delay(3000L)
+        viewModel.billingMessage.value = null
     }
 
     private fun requestConversationList() {
@@ -353,9 +519,88 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun collectBillingEvent() {
+        MainScope().launch {
+            billingManager.event.collect { event ->
+                when (event) {
+                    is MainBillingManager.Event.Connected -> {
+                        // 연결 성공 시 제품 정보 조회
+                        billingManager.queryAllProductDetails()
+                        viewModel.billingState.value = MainBillingState.Connected
+                    }
+
+                    is MainBillingManager.Event.ProductDetailsLoaded -> {
+                        viewModel.billingItems.value = event.productDetails.map { it.productId }
+                        // 제품 정보 로드 완료
+                        // updateProductUI(event.productDetails)
+                    }
+
+                    is MainBillingManager.Event.PurchaseSuccess -> {
+                        // 구매 성공
+                        // showPurchaseSuccessMessage()
+                        withContext(Dispatchers.IO) {
+                            val item = event.purchases.getOrNull(0) ?: return@withContext
+                            val productId = item.products.getOrNull(0) ?: return@withContext
+                            val result =
+                                retrofit.enrollPaymentSuspend(productId, item.purchaseToken)
+                            if (result == null || result.response.premium.not()) {
+                                showBillingMessage(BillingMessage.BILLING_SUCCESS_BUT_PRAI_FAIL)
+                            } else {
+                                viewModel.billingMessage.value = null
+                                viewModel.isBillingSuccessDialog.value = true
+                            }
+                        }
+                    }
+
+                    is MainBillingManager.Event.PurchasesLoaded -> {
+                        // 구매 성공
+                        // showPurchaseSuccessMessage()
+                        withContext(Dispatchers.IO) {
+                            event.purchases.forEach { item ->
+                                val productId = item.products.getOrNull(0) ?: return@withContext
+                                MainLogger.Billing.log("PurchasesLoaded: productId: $productId")
+                                if (item.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                                    val token = authManager.getAuthToken()
+                                    if (token != null) {
+                                        retrofit.enrollPayment(
+                                            token,
+                                            productId,
+                                            item.purchaseToken
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    is MainBillingManager.Event.Disconnected -> {
+                        viewModel.billingState.value = MainBillingState.Disconnected
+                    }
+
+                    is MainBillingManager.Event.PurchaseCanceled -> {
+                        viewModel.billingMessage.value = null
+                    }
+
+                    is MainBillingManager.Event.PurchaseError,
+                    is MainBillingManager.Event.PurchasesError -> {
+                        showBillingMessage(BillingMessage.GOOGLE_PLAY_PURCHASE_ERROR)
+                    }
+
+                    is MainBillingManager.Event.PurchasePending -> {
+                        showBillingMessage(BillingMessage.PENDING)
+                    }
+
+                    else -> {
+
+                    }
+                }
+            }
+        }
+    }
+
     private suspend fun handleRecordSuccessEvent(path: String) {
         val state = viewModel.callState.value
-        if (state is MainCallState.Active) {
+        if (state is MainCallState.Connected) {
             withContext(Dispatchers.Main) {
                 viewModel.callResponseWaiting.value = true
             }
@@ -367,22 +612,28 @@ class MainActivity : ComponentActivity() {
                     repository.selectedVoiceSettingItem.value.code,
                     repository.selectedVibeSettingItem.value.code,
                     repository.selectedVoiceSpeed.value,
-                    state.id
+                    state.conversationId
                 )
             } else {
                 viewModel.callResponseWaiting.value = false // handle Error case: token error
                 viewModel.isServerErrorDialog.value = true
             }
             player.stop()
+            Firebase.analytics.logEvent(
+                "call_user_input_sent",
+                bundleOf("conversation_id" to state.conversationId)
+            )
         }
     }
 
     private suspend fun handleRecordStartEvent() {
         if (MainPermissionHandler.isGranted(this, MainPermission.AUDIO)) {
-            recorder.start(this)
-            volumeReader.start(this)
-            withContext(Dispatchers.Main) {
-                viewModel.startRecording()
+            if (viewModel.callState.value is MainCallState.Connected) {
+                recorder.start(this)
+                volumeReader.start(this)
+                withContext(Dispatchers.Main) {
+                    viewModel.startRecording()
+                }
             }
         } else {
             withContext(Dispatchers.Main) {
@@ -403,11 +654,29 @@ class MainActivity : ComponentActivity() {
     private suspend fun handleRetrofitEvent(event: MainRetrofit.Event) {
         when (event) {
             is MainRetrofit.Event.FirstCallResponse -> {
-                handleCallResponse(event.response.segments)
+                if (viewModel.isFreeTrialCall.value == true) {
+                    repository.saveFreeTrialTime()
+                }
+                if (viewModel.callState.value is MainCallState.Connecting) {
+                    handleCallResponse(event.response.segments)
+                    Firebase.analytics.logEvent(
+                        "call_started",
+                        bundleOf("conversation_id" to event.response.conversationId)
+                    )
+                }
             }
 
             is MainRetrofit.Event.CallResponse -> {
-                handleCallResponse(event.response.segments)
+                if (viewModel.callState.value is MainCallState.Connected) {
+                    if (viewModel.isFreeTrialCall.value.not() && event.response.premium.not()) {
+                        viewModel.onCallEnd()
+                        viewModel.isBillingVisible.value = true
+                    } else {
+                        handleCallResponse(event.response.segments)
+                    }
+                }
+                viewModel.isPremiumUser.value = event.response.premium
+                viewModel.premiumExpiresTime.value = event.response.expiresAt
             }
 
             is MainRetrofit.Event.MinVersionResponse -> {
@@ -415,12 +684,16 @@ class MainActivity : ComponentActivity() {
             }
 
             is MainRetrofit.Event.UserRegistrationResponse -> {
+                withContext(Dispatchers.Main) {
+                    Firebase.crashlytics.setUserId(event.response.user.userId)
+                    Firebase.analytics.setUserId(event.response.user.userId)
+                }
+                retrofit.getPremiumInfo()
                 delay(1000L)
                 withContext(Dispatchers.Main) {
                     repository.updateServerUserInfo(event.response.user)
                     viewModel.isRegisterProcessing.value = false
                     viewModel.introState.value = MainIntroState.DONE
-
                 }
             }
 
@@ -430,6 +703,23 @@ class MainActivity : ComponentActivity() {
                     viewModel.isServerErrorDialog.value = true
                 }
             }
+
+            is MainRetrofit.Event.PremiumInfoResponse -> {
+                viewModel.isPremiumUser.value = event.response.premium
+                viewModel.premiumExpiresTime.value = event.response.expiresAt
+                viewModel.premiumChecked.value = true
+            }
+
+            is MainRetrofit.Event.PremiumInfoError -> {
+                viewModel.premiumChecked.value = true
+            }
+
+            is MainRetrofit.Event.PaymentEnrollResponse -> {
+                viewModel.premiumChecked.value = true
+                viewModel.isPremiumUser.value = event.response.premium
+                viewModel.premiumExpiresTime.value = event.response.expiresAt
+            }
+
 
             else -> Unit
         }
@@ -482,7 +772,7 @@ class MainActivity : ComponentActivity() {
             MainLogger.Activity.log("getAppVersion: $version")
             version
         } catch (exception: Exception) {
-            MainLogger.Activity.log("getAppVersion: exception: $exception")
+            MainLogger.Activity.log(exception, "getAppVersion: exception: $exception")
             null
         }
     }

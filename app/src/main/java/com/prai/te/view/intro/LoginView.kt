@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,25 +13,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.MainColor
 import com.prai.te.common.MainFont
@@ -41,7 +42,6 @@ import com.prai.te.common.cleanClickable
 import com.prai.te.common.rippleClickable
 import com.prai.te.common.textDp
 import com.prai.te.model.MainEvent
-import com.prai.te.model.MainIntroState
 import com.prai.te.view.model.MainViewModel
 
 @Preview
@@ -53,10 +53,15 @@ internal fun LoginView(viewModel: MainViewModel = viewModel()) {
         viewModel.introEndDialog.value = true
     }
 
+    LaunchedEffect(Unit) {
+        Firebase.analytics.logEvent("custom_screen_view", bundleOf("screen_name" to "login"))
+    }
+
     Box(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.navigationBars)
             .fillMaxSize()
+            .cleanClickable {}
             .background(color = Color(0xFF000000))
     ) {
         Column(modifier = Modifier.padding(start = 40.dp, top = 68.dp)) {
@@ -69,20 +74,21 @@ internal fun LoginView(viewModel: MainViewModel = viewModel()) {
                 color = Color(0xFFFFFFFF),
             )
             Row {
-                Text(
-                    text = "PRAI",
-                    fontSize = 42.textDp,
-                    lineHeight = 55.textDp,
-                    fontFamily = MainFont.Pretendard,
-                    fontWeight = FontWeight(700),
-                    color = Color(0xFFFFFFFF),
-                    modifier = Modifier.padding(top = 23.dp)
-                )
-                Spacer(
+                Image(
+                    painter = painterResource(R.drawable.login_prai_text_high),
+                    contentDescription = null,
                     modifier = Modifier
-                        .padding(start = 4.dp, top = 28.dp)
-                        .size(12.dp)
-                        .background(color = MainColor.PrimaryYE, shape = CircleShape)
+                        .padding(top = 23.dp)
+                        .width(105.dp)
+                        .height(39.dp)
+                )
+
+                Image(
+                    painter = painterResource(R.drawable.login_logo_high),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(start = 5.dp, top = 23.dp)
+                        .size(39.dp)
                 )
             }
         }
@@ -93,6 +99,11 @@ internal fun LoginView(viewModel: MainViewModel = viewModel()) {
                 .padding(bottom = 101.dp)
                 .rippleClickable(MainColor.Greyscale12WH) {
                     viewModel.dispatchEvent(MainEvent.GoogleLoginRequest)
+
+                    Firebase.analytics.logEvent(
+                        "custom_click_event",
+                        bundleOf("target" to "google_login")
+                    )
                 }
                 .clipToBounds()
                 .fillMaxWidth()

@@ -1,13 +1,20 @@
 package com.prai.te.view.model
 
+import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.auth.MainAuthManager
 import com.prai.te.media.MainPlayer
 import com.prai.te.media.MainVolumeReader
+import com.prai.te.model.MainBillingState
 import com.prai.te.model.MainCallState
 import com.prai.te.model.MainEvent
 import com.prai.te.model.MainIntroState
+import com.prai.te.model.MainOneButtonDialogData
+import com.prai.te.model.MainOutCase
+import com.prai.te.model.MainPremiumPlan
 import com.prai.te.model.MainTranslationState
 import com.prai.te.retrofit.MainConversationMeta
 import com.prai.te.retrofit.MainConversationResponse
@@ -15,7 +22,6 @@ import com.prai.te.retrofit.MainRetrofit
 import java.util.Timer
 import kotlin.concurrent.fixedRateTimer
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +50,7 @@ internal class MainViewModel : ViewModel() {
     val translationState = MutableStateFlow<MainTranslationState>(MainTranslationState.None)
     val isAiSettingVisible = MutableStateFlow(false)
     val callTime = MutableStateFlow(0)
+    val freeTrialCallTime = MutableStateFlow(0)
     val recordTime = MutableStateFlow(0)
     val currentSegment = MutableStateFlow<CallSegmentItem?>(null)
     val notification = MutableStateFlow<String?>(null)
@@ -62,8 +69,70 @@ internal class MainViewModel : ViewModel() {
 
     val isLogoutDialog = MutableStateFlow(false)
     val isDeleteUserDialog = MutableStateFlow(false)
+    val oneButtonDialogData = MutableStateFlow<MainOneButtonDialogData?>(null)
+
+    val isBillingVisible = MutableStateFlow(false)
+    val isMyMembershipVisible = MutableStateFlow(false)
+    val billingState = MutableStateFlow<MainBillingState>(MainBillingState.Disconnected)
+    val billingItems = MutableStateFlow<List<String>>(listOf())
+    val isPremiumUser = MutableStateFlow(false)
+    val premiumExpiresTime = MutableStateFlow<String?>(null)
+    val premiumChecked = MutableStateFlow(false)
+    val selectedPlan = MutableStateFlow(MainPremiumPlan.YEAR)
+
+    val billingMessage = MutableStateFlow<BillingMessage?>(null)
+    val isBillingSuccessDialog = MutableStateFlow(false)
+    val isRecoverSuccessDialog = MutableStateFlow(false)
+
+    val isFreeTrialCall = MutableStateFlow(true)
+    val outCase = MutableStateFlow<MainOutCase?>(null)
+
+    var waitingStartTime = 0L
+
+
+    init {
+        viewModelScope.launch {
+            callResponseWaiting.collect {
+                if (it) {
+                    waitingStartTime = System.currentTimeMillis()
+                } else {
+                    val state = callState.value
+                    if (state is MainCallState.Connected) {
+                        val diff = System.currentTimeMillis() - waitingStartTime
+                        Firebase.analytics.logEvent(
+                            "call_response_arrived",
+                            bundleOf(
+                                "conversation_id" to state.conversationId,
+                                "delay_ms" to diff
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun clearView() {
+        isBillingVisible.value = false
+        isProfileSettingVisible.value = false
+        isMainSettingVisible.value = false
+        isConversationListVisible.value = false
+        isTranslationOverlayVisible.value = false
+        isSettingOverlayVisible.value = false
+        isBillingSuccessDialog.value = false
+        isRecoverSuccessDialog.value = false
+        isMyMembershipVisible.value = false
+    }
 
     private var callTimer: Timer? = null
+        set(value) {
+            if (field != value) {
+                field?.cancel()
+                field = value
+            }
+        }
+
+    private var freeTrialCallTimer: Timer? = null
         set(value) {
             if (field != value) {
                 field?.cancel()
@@ -84,6 +153,10 @@ internal class MainViewModel : ViewModel() {
                 field = value
             }
         }
+
+    fun isPremiumUser(): Boolean {
+        return isPremiumUser.value == true
+    }
 
     fun onRetrofitEvent(event: MainRetrofit.Event) {
         when (event) {
@@ -163,19 +236,19 @@ internal class MainViewModel : ViewModel() {
     fun onCallStart() {
         initializeData()
         callState.value = MainCallState.Connecting
-        dispatchEvent(MainEvent.CallStart)
     }
 
     fun onCallConnected(id: String) {
         callTime.value = 0
         startCallTimer()
-        callState.value = MainCallState.Active(id)
+        callState.value = MainCallState.Connected(id)
     }
 
     fun onCallEnd() {
         stopCallTimer()
         callState.value = MainCallState.None
         initializeData()
+        clearView()
         dispatchEvent(MainEvent.CallEnd)
     }
 
@@ -274,6 +347,7 @@ internal class MainViewModel : ViewModel() {
         isRecording.value = false
         isAiSettingVisible.value = false
         isCallEndingDialog.value = false
+        callResponseWaiting.value = false
         chatList.value = emptyList()
         isSettingOverlayVisible.value = false
         isTranslationOverlayVisible.value = false
@@ -286,12 +360,25 @@ internal class MainViewModel : ViewModel() {
     }
 
     private fun startCallTimer() {
-        callTime.value = 0
-        callTimer = fixedRateTimer("call_timer", true, 0L, 1000) { callTime.value += 1 }
+        if (isFreeTrialCall.value) {
+            freeTrialCallTime.value = 60 * 3
+            freeTrialCallTimer = fixedRateTimer("free_trial_call_timer", true, 0L, 1000) {
+                if (freeTrialCallTime.value - 1 >= 0) {
+                    freeTrialCallTime.value -= 1
+                } else {
+                    onCallEnd()
+                    isBillingVisible.value = true
+                }
+            }
+        } else {
+            callTime.value = 0
+            callTimer = fixedRateTimer("call_timer", true, 0L, 1000) { callTime.value += 1 }
+        }
     }
 
     private fun stopCallTimer() {
         callTimer = null
+        freeTrialCallTimer = null
     }
 
     private fun startRecordTimer() {

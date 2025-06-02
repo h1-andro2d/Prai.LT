@@ -50,12 +50,12 @@ internal object MainAuthManager2 {
             try {
                 val result = manager.getCredential(context, request)
                 handleCredentialResult(result.credential)
-            } catch (_: NoCredentialException) {
+            } catch (exception: NoCredentialException) {
                 mutableEvent.emit(Event.NoCredential)
-                MainLogger.Auth.log("connect: event: ${Event.NoCredential}")
+                MainLogger.Auth.log(exception, "connect: event: ${Event.NoCredential}")
             } catch (exception: Exception) {
                 mutableEvent.emit(Event.Error)
-                MainLogger.Auth.log("connect: exception: $exception")
+                MainLogger.Auth.log(exception, "connect: exception: $exception")
             }
         }
     }
@@ -77,7 +77,7 @@ internal object MainAuthManager2 {
             }
         } catch (exception: Exception) {
             scope.launch { mutableEvent.emit(Event.Error) }
-            MainLogger.Auth.log("connect: exception: $exception")
+            MainLogger.Auth.log(exception, "connect: exception: $exception")
         }
     }
 
@@ -92,7 +92,7 @@ internal object MainAuthManager2 {
                 MainLogger.Auth.log("disconnect: success")
             } catch (exception: Exception) {
                 mutableEvent.emit(Event.Error)
-                MainLogger.Auth.log("disconnect: exception: $exception")
+                MainLogger.Auth.log(exception, "disconnect: exception: $exception")
             }
         }
     }

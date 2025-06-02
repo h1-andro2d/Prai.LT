@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,8 +34,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.MainColor
 import com.prai.te.common.MainFont
@@ -52,6 +56,10 @@ internal fun ConversationListView(model: MainViewModel = viewModel()) {
     val selectedId = model.selectedConversationId.collectAsStateWithLifecycle()
     BackHandler {
         model.closeChatList()
+    }
+
+    LaunchedEffect(Unit) {
+        Firebase.analytics.logEvent("custom_screen_view", bundleOf("screen_name" to "conversation_list"))
     }
 
     Box(
@@ -228,6 +236,10 @@ private fun ConversationRoomView(id: String = "test", model: MainViewModel = vie
     val messages = model.getConversationFlow(id).collectAsStateWithLifecycle()
     BackHandler {
         model.selectedConversationId.value = null
+    }
+
+    LaunchedEffect(Unit) {
+        Firebase.analytics.logEvent("custom_screen_view", bundleOf("screen_name" to "conversation_detail"))
     }
 
     LazyColumn(

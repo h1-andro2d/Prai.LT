@@ -37,7 +37,8 @@ internal object MainNavigator {
                     "market://details?id=$appPackageName".toUri()
                 )
             )
-        } catch (_: ActivityNotFoundException) {
+        } catch (exception: ActivityNotFoundException) {
+            MainLogger.Navigator.log(exception, "openAppStore exception: $exception")
             context.startActivity(
                 Intent(
                     Intent.ACTION_VIEW,

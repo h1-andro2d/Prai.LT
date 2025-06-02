@@ -37,14 +37,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.FadeView
 import com.prai.te.common.MainFont
 import com.prai.te.common.cleanClickable
 import com.prai.te.common.textDp
 import com.prai.te.model.MainCallState
+import com.prai.te.model.MainEvent
 import com.prai.te.view.model.CallSegmentItem
 import com.prai.te.view.model.MainViewModel
 import kotlinx.coroutines.delay
@@ -55,7 +58,7 @@ import kotlinx.coroutines.isActive
 internal fun MenuRowView(
     currentSegment: CallSegmentItem? = null,
     isRecording: Boolean = true,
-    state: MainCallState = MainCallState.Active("test"),
+    state: MainCallState = MainCallState.Connected("test"),
     modifier: Modifier = Modifier,
     model: MainViewModel = viewModel()
 ) {
@@ -64,6 +67,10 @@ internal fun MenuRowView(
 
     val micIconSize = 90.dp
     val micIconRootSize = 97.dp
+
+    LaunchedEffect(Unit) {
+        Firebase.analytics.logEvent("custom_screen_view", bundleOf("screen_name" to "call_menu"))
+    }
 
     Box(
         modifier = modifier
@@ -92,7 +99,7 @@ internal fun MenuRowView(
                 when (state) {
                     is MainCallState.Connecting -> Unit
                     is MainCallState.None -> CallIconWithAnimation(callIconSize, callIconRootSize)
-                    is MainCallState.Active -> MicIconWithAnimation(
+                    is MainCallState.Connected -> MicIconWithAnimation(
                         currentSegment,
                         isRecording,
                         micIconSize,
@@ -124,7 +131,7 @@ internal fun MenuRowView(
                         )
                     }
 
-                    is MainCallState.Active -> {
+                    is MainCallState.Connected -> {
                         Image(
                             painter = painterResource(R.drawable.main_button_menu),
                             contentDescription = null,
@@ -295,7 +302,7 @@ private fun CallIconWithAnimation(iconSize: Dp, rootSize: Dp, model: MainViewMod
     Box(contentAlignment = Alignment.Center) {
         Canvas(
             modifier = Modifier
-                .cleanClickable { model.onCallStart() }
+                .cleanClickable { model.dispatchEvent(MainEvent.CallStart) }
                 .size(rootSize)
         ) {
             drawCircle(

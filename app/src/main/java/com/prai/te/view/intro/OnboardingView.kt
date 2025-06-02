@@ -43,8 +43,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.R
 import com.prai.te.common.MainColor
 import com.prai.te.common.MainFont
@@ -77,6 +80,13 @@ internal fun OnboardingView(
         else -> false
     }
 
+    LaunchedEffect(currentPage) {
+        Firebase.analytics.logEvent(
+            "custom_screen_view",
+            bundleOf("screen_name" to "sign_up_$currentPage")
+        )
+    }
+
     LaunchedEffect(Unit) { currentPage = 0 }
 
     BackHandler {
@@ -92,6 +102,7 @@ internal fun OnboardingView(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.navigationBars)
             .fillMaxSize()
+            .cleanClickable {}
             .background(color = Color(0xFF000000))
     ) {
         ProgressIndicator(currentPage)
@@ -138,6 +149,16 @@ internal fun OnboardingView(
             if (activeButton) {
                 NextButtonActive(
                     onClick = {
+                        Firebase.analytics.logEvent(
+                            "sign_up_next_button_click",
+                            bundleOf(
+                                "active" to active,
+                                "current_page" to currentPage,
+                                "name" to if (name.value.isEmpty()) "none" else name.value,
+                                "gender" to (gender.value?.code ?: "none"),
+                                "age" to if (age.value.isEmpty()) "none" else age.value
+                            )
+                        )
                         if (active) {
                             if (currentPage == 0 || currentPage == 2) {
                                 controller?.hide()

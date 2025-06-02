@@ -1,7 +1,6 @@
 package com.prai.te.common
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -32,7 +32,6 @@ internal fun Modifier.cleanClickable(onClick: () -> Unit): Modifier {
         onClick.invoke()
     }
 }
-
 
 @Composable
 internal fun Modifier.clickBlocker(shouldBlock: Boolean): Modifier {
@@ -131,6 +130,11 @@ internal fun Modifier.rippleClickable(
 @Composable
 internal fun VerticalGap(height: Int) {
     Spacer(modifier = Modifier.height(height.dp))
+}
+
+@Composable
+internal fun HorizontalGap(width: Int) {
+    Spacer(modifier = Modifier.width(width.dp))
 }
 
 @Composable

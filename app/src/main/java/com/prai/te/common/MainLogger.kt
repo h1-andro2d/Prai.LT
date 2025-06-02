@@ -1,12 +1,26 @@
 package com.prai.te.common
 
 import android.util.Log
+import androidx.core.os.bundleOf
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
+import com.google.firebase.crashlytics.CustomKeysAndValues
+import com.google.firebase.crashlytics.crashlytics
 
 internal sealed class MainLogger {
     protected abstract val tag: String
 
     fun log(message: String) {
         Log.d(MAIN_TAG + DELIMITER + tag, message)
+    }
+
+    fun log(exception: Exception, message: String) {
+        val customKeysAndValues = CustomKeysAndValues.Builder()
+            .putString("message", message)
+            .build()
+        Log.d(MAIN_TAG + DELIMITER + tag, message)
+        Firebase.crashlytics.recordException(exception, customKeysAndValues)
+        Firebase.analytics.logEvent("custom_exception", bundleOf("message" to message))
     }
 
     data object Recorder : MainLogger() {
@@ -39,6 +53,26 @@ internal sealed class MainLogger {
 
     data class View(private val name: String) : MainLogger() {
         override val tag = name
+    }
+
+    data object Billing : MainLogger() {
+        override val tag = "Billing"
+    }
+
+    data object Security : MainLogger() {
+        override val tag = "Security"
+    }
+
+    data object Analytics : MainLogger() {
+        override val tag = "Analytics"
+    }
+
+    data object Navigator : MainLogger() {
+        override val tag = "Navigator"
+    }
+
+    data object ETC : MainLogger() {
+        override val tag = "ETC"
     }
 
     companion object {

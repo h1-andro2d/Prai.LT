@@ -17,7 +17,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,12 +55,12 @@ internal fun TalkerBox(
     val initialRadius = with(LocalDensity.current) { imageSize.toPx() / 2 - 10f }
 
     // Video와 Image의 alpha 애니메이션
-    val videoAlpha = remember { Animatable(if (state is MainCallState.Active) 1f else 0f) }
-    val imageAlpha = remember { Animatable(if (state is MainCallState.Active) 0f else 1f) }
+    val videoAlpha = remember { Animatable(if (state is MainCallState.Connected) 1f else 0f) }
+    val imageAlpha = remember { Animatable(if (state is MainCallState.Connected) 0f else 1f) }
 
     // state 변경 시 alpha 애니메이션
     LaunchedEffect(state) {
-        if (state is MainCallState.Active) {
+        if (state is MainCallState.Connected) {
             videoAlpha.animateTo(1f, animationSpec = tween(100, easing = LinearEasing))
             imageAlpha.animateTo(0f, animationSpec = tween(100, easing = LinearEasing))
         } else {
@@ -74,12 +73,7 @@ internal fun TalkerBox(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .cleanClickable {
-                // 주석 처리된 기존 로직 유지
-//                if (model.callState.value == MainCallState.Connecting) {
-//                    model.callState.value = MainCallState.Active("")
-//                } else {
-//                    model.callState.value = MainCallState.Connecting
-//                }
+//                model.isBillingVisible.value = true
             }
             .size(383.dp)
     ) {
@@ -210,7 +204,7 @@ private fun VideoLoopScreen(state: MainCallState, alpha: Float, videoAlphaAnimat
     // 생명주기와 상태에 따른 비디오 재생 제어
     LaunchedEffect(lifecycleState, state) {
         // 앱이 포그라운드에 있고 Active 상태일 때만 재생
-        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED) && state is MainCallState.Active) {
+        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED) && state is MainCallState.Connected) {
             if (!videoView.isPlaying) {
                 videoView.start()
             }

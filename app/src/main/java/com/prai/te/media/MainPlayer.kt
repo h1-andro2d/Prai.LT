@@ -52,7 +52,7 @@ internal class MainPlayer(private val scope: CoroutineScope) {
             retriever.setDataSource(path)
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: -1
         } catch (exception: Exception) {
-            MainLogger.Player.log("error: getDuration, exception: $exception")
+            MainLogger.Player.log(exception, "error: getDuration, exception: $exception")
             -1
         } finally {
             retriever.release()
@@ -70,7 +70,7 @@ internal class MainPlayer(private val scope: CoroutineScope) {
                 setOnCompletionListener { onCompletion?.invoke() }
             }
         } catch (exception: Exception) {
-            MainLogger.Player.log("error: createMediaPlayer, exception: $exception")
+            MainLogger.Player.log(exception, "error: createMediaPlayer, exception: $exception")
             return null
         }
         return player
@@ -81,7 +81,7 @@ internal class MainPlayer(private val scope: CoroutineScope) {
             stop()
             release()
         } catch (exception: Exception) {
-            MainLogger.Player.log("error: tryRelease, exception: $exception")
+            MainLogger.Player.log(exception, "error: tryRelease, exception: $exception")
         }
     }
 
@@ -89,7 +89,7 @@ internal class MainPlayer(private val scope: CoroutineScope) {
         try {
             start()
         } catch (exception: Exception) {
-            MainLogger.Player.log("error: safeStart, exception: $exception")
+            MainLogger.Player.log(exception, "error: safeStart, exception: $exception")
         }
     }
 

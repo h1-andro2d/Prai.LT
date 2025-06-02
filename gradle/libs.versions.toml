@@ -3,14 +3,18 @@ accompanistSystemuicontroller = "0.36.0"
 activityCompose = "1.10.1"
 agp = "8.7.3"
 apng = "3.0.2"
+billing = "7.1.1"
 converterGson = "2.11.0"
 coreSplashscreen = "1.0.1"
 credentials = "1.5.0"
-datastorePreferences = "1.1.4"
+datastorePreferences = "1.1.5"
 exoplayer = "2.19.1"
-firebaseBom = "33.12.0"
+firebaseAnalyticsKtx = "22.4.0"
+firebaseBom = "33.13.0"
+firebaseCrashlyticsGradle = "3.0.3"
 googleid = "1.1.1"
-kotlin = "2.1.10"
+integrity = "1.4.0"
+kotlin = "2.1.20"
 coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -23,11 +27,11 @@ activity = "1.10.1"
 constraintlayout = "2.2.1"
 playServicesAuth = "21.3.0"
 retrofit = "2.11.0"
-runtimeAndroid = "1.7.8"
+runtimeAndroid = "1.8.0"
 firebaseCommonKtx = "21.0.0"
 firebaseAuthKtx = "23.2.0"
 gmsGoogleServices = "4.4.2"
-media3Exoplayer = "1.6.0"
+media3Exoplayer = "1.6.1"
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistSystemuicontroller" }
@@ -52,10 +56,16 @@ androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 apng = { module = "com.github.penfeizhou.android.animation:apng", version.ref = "apng" }
+billing = { module = "com.android.billingclient:billing", version.ref = "billing" }
+billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 exoplayer = { module = "com.google.android.exoplayer:exoplayer", version.ref = "exoplayer" }
+firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx", version.ref = "firebaseAnalyticsKtx" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-crashlytics-gradle = { module = "com.google.firebase:firebase-crashlytics-gradle", version.ref = "firebaseCrashlyticsGradle" }
+firebase-crashlytics-ndk = { module = "com.google.firebase:firebase-crashlytics-ndk" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+integrity = { module = "com.google.android.play:integrity", version.ref = "integrity" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -76,4 +86,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 gms-google-services = { id = "com.google.gms.google-services", version.ref = "gmsGoogleServices" }
-
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.3" }

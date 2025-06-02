@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.gms.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -13,8 +14,8 @@ android {
         applicationId = "com.prai.te"
         minSdk = 31
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 17
+        versionName = "1.16"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -100,6 +101,11 @@ dependencies {
     implementation(libs.exoplayer)
     implementation(libs.apng)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.billing)
+    implementation(libs.billing.ktx)
+    implementation(libs.integrity)
+    implementation(libs.firebase.analytics.ktx)
+    implementation(libs.firebase.crashlytics.ndk)
 }
 
 composeCompiler {

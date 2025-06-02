@@ -20,7 +20,7 @@ internal object MainCodec {
                 outputStream.write(decodedBytes)
             }
         } catch (exception: Exception) {
-            MainLogger.Codec.log("error: decodeBase64ToFile, exception: $exception")
+            MainLogger.Codec.log(exception, "error: decodeBase64ToFile, exception: $exception")
             return false
         }
         return true

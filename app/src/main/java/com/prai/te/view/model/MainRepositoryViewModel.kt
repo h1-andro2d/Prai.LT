@@ -1,8 +1,11 @@
 package com.prai.te.view.model
 
 import android.app.Application
+import androidx.core.os.bundleOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.prai.te.model.MainRepository
 import com.prai.te.retrofit.MainUserInfo
 import kotlinx.coroutines.delay
@@ -10,7 +13,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-internal class MainRepositoryViewModel(application: Application) : AndroidViewModel(application) {
+internal class MainRepositoryViewModel(
+    application: Application = Application()
+) : AndroidViewModel(application) {
     private val repository = MainRepository(application)
 
     val event = MutableSharedFlow<Event>()
@@ -62,6 +67,15 @@ internal class MainRepositoryViewModel(application: Application) : AndroidViewMo
         repository.selectedVoiceSpeed = selectedVoiceSpeed.value
         repository.selectedVoiceSettingItem = selectedVoiceSettingItem.value
         repository.selectedVibeSettingItem = selectedVibeSettingItem.value
+
+        Firebase.analytics.logEvent(
+            "voice_settings_saved",
+            bundleOf(
+                "voice_type" to selectedVoiceSettingItem.value.code,
+                "tone" to selectedVibeSettingItem.value.code,
+                "speed" to selectedVoiceSpeed.value,
+            )
+        )
     }
 
     fun rollbackAiSetting() {
@@ -100,6 +114,19 @@ internal class MainRepositoryViewModel(application: Application) : AndroidViewMo
             selectedGender.value = genderCache
             nameText.value = nameCache
         }
+    }
+
+    fun saveFreeTrialTime() {
+        repository.freeTrialTime = System.currentTimeMillis()
+    }
+
+    fun canStartFreeTrial(): Boolean {
+        if (repository.freeTrialTime == 0L) {
+            return true
+        }
+        val day1 = 1000 * 60 * 60 * 24
+        val isValid = System.currentTimeMillis() - repository.freeTrialTime >= day1
+        return isValid
     }
 
     sealed interface Event {

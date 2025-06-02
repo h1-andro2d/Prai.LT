@@ -62,7 +62,7 @@ internal class MainRecorder(private val scope: CoroutineScope) {
                 prepare()
             }
         } catch (exception: Exception) {
-            MainLogger.Recorder.log("error: createRecorder, exception: $exception")
+            MainLogger.Recorder.log(exception, "error: createRecorder, exception: $exception")
             return null
         }
         return recorder
@@ -73,7 +73,7 @@ internal class MainRecorder(private val scope: CoroutineScope) {
             stop()
             release()
         } catch (exception: Exception) {
-            MainLogger.Recorder.log("error: tryRelease, exception: $exception")
+            MainLogger.Recorder.log(exception, "error: tryRelease, exception: $exception")
         }
     }
 
@@ -81,7 +81,7 @@ internal class MainRecorder(private val scope: CoroutineScope) {
         try {
             start()
         } catch (exception: Exception) {
-            MainLogger.Recorder.log("error: safeStart, exception: $exception")
+            MainLogger.Recorder.log(exception, "error: safeStart, exception: $exception")
         }
     }
 

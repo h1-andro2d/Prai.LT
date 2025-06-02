@@ -1,5 +1,6 @@
 package com.prai.te.retrofit
 
+import com.prai.te.auth.MainAuthManager
 import com.prai.te.common.MainCodec
 import com.prai.te.common.MainLogger
 import java.util.concurrent.TimeUnit
@@ -15,7 +16,7 @@ import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-internal class MainRetrofit(private val scope: CoroutineScope) {
+internal class MainRetrofit(private val scope: CoroutineScope, val authManager: MainAuthManager) {
     val event: SharedFlow<Event> by lazy { mutableEvent.asSharedFlow() }
 
     private val service: MainApiService by lazy { createService() }
@@ -40,7 +41,8 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 mutableEvent.emit(Event.FirstCallResponse(response))
                 MainLogger.Retrofit.log("sendFirstCallRequest: success: $response")
             } catch (exception: Exception) {
-                MainLogger.Retrofit.log("sendFirstCallRequest: exception: $exception")
+                MainLogger.Retrofit.log(exception, "sendFirstCallRequest: exception: $exception")
+                mutableEvent.emit(Event.CallResponseError)
             }
         }
     }
@@ -65,10 +67,11 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
             try {
                 val response = service.sendCallRequest("Bearer $token", request)
                 mutableEvent.emit(Event.CallResponse(response))
+                MainLogger.Retrofit.log("sendCallRequest: token: $token")
                 MainLogger.Retrofit.log("sendCallRequest: success: $response")
             } catch (exception: Exception) {
                 mutableEvent.emit(Event.CallResponseError)
-                MainLogger.Retrofit.log("sendCallRequest: exception: $exception")
+                MainLogger.Retrofit.log(exception, "sendCallRequest: exception: $exception")
             }
         }
     }
@@ -81,7 +84,7 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 mutableEvent.emit(Event.ConversationListResponse(response))
                 MainLogger.Retrofit.log("getConversationList, success: $response")
             } catch (exception: Exception) {
-                MainLogger.Retrofit.log("getConversationList, exception: $exception")
+                MainLogger.Retrofit.log(exception, "getConversationList, exception: $exception")
             }
         }
     }
@@ -94,7 +97,7 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 mutableEvent.emit(Event.ConversationResponse(response))
                 MainLogger.Retrofit.log("getConversation, success: $response")
             } catch (exception: Exception) {
-                MainLogger.Retrofit.log("getConversation, exception: $exception")
+                MainLogger.Retrofit.log(exception, "getConversation, exception: $exception")
             }
         }
     }
@@ -108,7 +111,7 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 mutableEvent.emit(Event.TranslationResponse(text, response))
                 MainLogger.Retrofit.log("getTranslation: success: ${response.translation}")
             } catch (exception: Exception) {
-                MainLogger.Retrofit.log("getTranslation: exception: $exception")
+                MainLogger.Retrofit.log(exception, "getTranslation: exception: $exception")
             }
         }
     }
@@ -129,7 +132,7 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 MainLogger.Retrofit.log("registerUser: success: $response")
             } catch (exception: Exception) {
                 mutableEvent.emit(Event.UserRegistrationError)
-                MainLogger.Retrofit.log("registerUser: exception: $exception")
+                MainLogger.Retrofit.log(exception, "registerUser: exception: $exception")
             }
         }
     }
@@ -170,11 +173,11 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                     MainLogger.Retrofit.log("getUserInfo: not found")
                 } else {
                     continuation.resume(Event.UserApiError(exception.message ?: "Unknown error"))
-                    MainLogger.Retrofit.log("getUserInfo: exception: $exception")
+                    MainLogger.Retrofit.log(exception, "getUserInfo: exception: $exception")
                 }
             } catch (exception: Exception) {
                 continuation.resume(Event.UserApiError(exception.message ?: "Unknown error"))
-                MainLogger.Retrofit.log("getUserInfo: exception: $exception")
+                MainLogger.Retrofit.log(exception, "getUserInfo: exception: $exception")
             }
         }
     }
@@ -196,7 +199,7 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 MainLogger.Retrofit.log("updateUserInfo: success: $response")
             } catch (exception: Exception) {
                 mutableEvent.emit(Event.UserApiError(exception.message ?: "Unknown error"))
-                MainLogger.Retrofit.log("updateUserInfo: exception: $exception")
+                MainLogger.Retrofit.log(exception, "updateUserInfo: exception: $exception")
             }
         }
     }
@@ -211,7 +214,7 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 MainLogger.Retrofit.log("deleteUser: success: $response")
             } catch (exception: Exception) {
                 mutableEvent.emit(Event.UserApiError(exception.message ?: "Unknown error"))
-                MainLogger.Retrofit.log("deleteUser: exception: $exception")
+                MainLogger.Retrofit.log(exception, "deleteUser: exception: $exception")
             }
         }
     }
@@ -225,7 +228,138 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
                 MainLogger.Retrofit.log("getMinimumVersion: success: $response")
             } catch (exception: Exception) {
                 mutableEvent.emit(Event.VersionApiError(exception.message ?: "Unknown error"))
-                MainLogger.Retrofit.log("getMinimumVersion: exception: $exception")
+                MainLogger.Retrofit.log(exception, "getMinimumVersion: exception: $exception")
+            }
+        }
+    }
+
+    fun enrollPayment(
+        authToken: String,
+        productId: String? = null,
+        purchaseToken: String? = null
+    ) {
+        val request = MainPaymentEnrollRequest(
+            platform = "android",
+            productId = productId,
+            purchaseToken = purchaseToken
+        )
+        MainLogger.Retrofit.log("enrollPayment: request: $request")
+
+        scope.launch {
+            try {
+                val response = service.enrollPayment("Bearer $authToken", request)
+                mutableEvent.emit(Event.PaymentEnrollResponse(response))
+                MainLogger.Retrofit.log("enrollPayment: success: $response")
+            } catch (exception: HttpException) {
+                val errorCode = exception.code()
+                val errorMessage = exception.message() ?: "Unknown error"
+                mutableEvent.emit(Event.PaymentApiError(errorCode, errorMessage))
+                MainLogger.Retrofit.log(
+                    exception,
+                    "enrollPayment: HttpException: code=$errorCode, message=$errorMessage"
+                )
+            } catch (exception: Exception) {
+                mutableEvent.emit(Event.PaymentApiError(500, exception.message ?: "Unknown error"))
+                MainLogger.Retrofit.log(exception, "enrollPayment: exception: $exception")
+            }
+        }
+    }
+
+    suspend fun enrollPaymentSuspend(
+        productId: String? = null,
+        purchaseToken: String? = null
+    ): Event.PaymentEnrollResponse? {
+        val request = MainPaymentEnrollRequest(
+            platform = "android",
+            productId = productId,
+            purchaseToken = purchaseToken
+        )
+        MainLogger.Retrofit.log("enrollPaymentSuspend: request: $request")
+        try {
+            val authToken = authManager.getAuthToken() ?: throw SecurityException()
+            val response = service.enrollPayment("Bearer $authToken", request)
+            mutableEvent.emit(Event.PaymentEnrollResponse(response))
+            MainLogger.Retrofit.log("enrollPaymentSuspend: success: $response")
+            return Event.PaymentEnrollResponse(response)
+        } catch (exception: HttpException) {
+            val errorCode = exception.code()
+            val errorMessage = exception.message() ?: "Unknown error"
+            mutableEvent.emit(Event.PaymentApiError(errorCode, errorMessage))
+            MainLogger.Retrofit.log(
+                exception,
+                "enrollPaymentSuspend: HttpException: code=$errorCode, message=$errorMessage"
+            )
+            return null
+        } catch (exception: Exception) {
+            mutableEvent.emit(Event.PaymentApiError(500, exception.message ?: "Unknown error"))
+            MainLogger.Retrofit.log(exception, "enrollPaymentSuspend: exception: $exception")
+            return null
+        }
+    }
+
+    fun getPremiumInfo() {
+        scope.launch {
+            try {
+                val token = authManager.getAuthToken() ?: throw SecurityException()
+                val response = service.getPremiumInfo("Bearer $token")
+                mutableEvent.emit(Event.PremiumInfoResponse(response))
+                MainLogger.Retrofit.log("getPremiumInfo: success: $response")
+            } catch (exception: HttpException) {
+                val errorMessage = exception.message ?: "Unknown error"
+                mutableEvent.emit(Event.PremiumInfoError(errorMessage))
+                MainLogger.Retrofit.log(exception, "getPremiumInfo: HttpException: $errorMessage")
+            } catch (exception: Exception) {
+                mutableEvent.emit(Event.PremiumInfoError(exception.message ?: "Unknown error"))
+                MainLogger.Retrofit.log(exception, "getPremiumInfo: exception: $exception")
+            }
+        }
+    }
+
+    suspend fun getPremiumInfoSuspend(): MainPremiumInfoResponse? {
+        try {
+            val token = authManager.getAuthToken() ?: throw SecurityException()
+            val response = service.getPremiumInfo("Bearer $token")
+            mutableEvent.emit(Event.PremiumInfoResponse(response))
+            MainLogger.Retrofit.log("getPremiumInfo: success: $response")
+            return response
+        } catch (exception: HttpException) {
+            val errorMessage = exception.message ?: "Unknown error"
+            mutableEvent.emit(Event.PremiumInfoError(errorMessage))
+            MainLogger.Retrofit.log(exception, "getPremiumInfo: HttpException: $errorMessage")
+            return null
+        } catch (exception: Exception) {
+            mutableEvent.emit(Event.PremiumInfoError(exception.message ?: "Unknown error"))
+            MainLogger.Retrofit.log(exception, "getPremiumInfo: exception: $exception")
+            return null
+        }
+    }
+
+    fun sendCancellationReason(reason: String) {
+        val request = MainCancellationReasonRequest("android", reason)
+        MainLogger.Retrofit.log("sendCancellationReason: request: $request")
+
+        scope.launch {
+            try {
+                val token = authManager.getAuthToken() ?: throw SecurityException()
+                val response = service.sendCancellationReason("Bearer $token", request)
+                mutableEvent.emit(Event.CancellationReasonResponse(response))
+                MainLogger.Retrofit.log("sendCancellationReason: success: $response")
+            } catch (exception: HttpException) {
+                val errorCode = exception.code()
+                val errorMessage = exception.message() ?: "Unknown error"
+                mutableEvent.emit(Event.CancellationReasonError(errorCode, errorMessage))
+                MainLogger.Retrofit.log(
+                    exception,
+                    "sendCancellationReason: HttpException: code=$errorCode, message=$errorMessage"
+                )
+            } catch (exception: Exception) {
+                mutableEvent.emit(
+                    Event.CancellationReasonError(
+                        500,
+                        exception.message ?: "Unknown error"
+                    )
+                )
+                MainLogger.Retrofit.log(exception, "sendCancellationReason: exception: $exception")
             }
         }
     }
@@ -254,6 +388,7 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
         return "Speak at ${speedPercent}% of normal speed. Use a $vibe Accent."
     }
 
+
     sealed interface Event {
         data class CallResponse(val response: MainCallResponse) : Event
         data object CallResponseError : Event
@@ -275,6 +410,14 @@ internal class MainRetrofit(private val scope: CoroutineScope) {
         data object UserInfoNotFound : Event
         data class MinVersionResponse(val response: MainMinVersionResponse) : Event
         data class VersionApiError(val errorMessage: String) : Event
+        data class PaymentEnrollResponse(val response: MainPaymentEnrollResponse) : Event
+        data class PaymentApiError(val errorCode: Int, val errorMessage: String) : Event
+        data class PremiumInfoResponse(val response: MainPremiumInfoResponse) : Event
+        data class PremiumInfoError(val errorMessage: String) : Event
+
+        data class CancellationReasonResponse(val response: MainCancellationReasonResponse) : Event
+        data class CancellationReasonError(val errorCode: Int, val errorMessage: String) : Event
+
     }
 
     companion object {

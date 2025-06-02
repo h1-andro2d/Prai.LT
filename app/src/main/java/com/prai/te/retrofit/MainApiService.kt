@@ -11,14 +11,14 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 internal interface MainApiService {
-    @POST("call")
+    @POST("v2/call")
     @Headers("Content-Type: application/json")
     suspend fun sendCallRequest(
         @Header("Authorization") authToken: String,
         @Body request: MainCallRequest
     ): MainCallResponse
 
-    @POST("call")
+    @POST("v2/call")
     @Headers("Content-Type: application/json")
     suspend fun sendFirstCallRequest(
         @Header("Authorization") authToken: String,
@@ -70,6 +70,24 @@ internal interface MainApiService {
     suspend fun getMinimumVersion(
         @Query("client") clientType: String
     ): MainMinVersionResponse
+    @POST("payments/enroll")
+
+    suspend fun enrollPayment(
+        @Header("Authorization") authToken: String,
+        @Body request: MainPaymentEnrollRequest
+    ): MainPaymentEnrollResponse
+
+    @GET("payments/info")
+    suspend fun getPremiumInfo(
+        @Header("Authorization") authToken: String
+    ): MainPremiumInfoResponse
+
+    @POST("payments/cancel")
+    @Headers("Content-Type: application/json")
+    suspend fun sendCancellationReason(
+        @Header("Authorization") authToken: String,
+        @Body request: MainCancellationReasonRequest
+    ): MainCancellationReasonResponse
 }
 
 internal data class MainFirstCallRequest(
@@ -98,8 +116,12 @@ internal data class MainCallRequest(
 internal data class MainCallResponse(
     val userText: String,
     val aiText: String,
-    val segments: List<MainCallSegment>,
-    val processingTimes: MainCallSegment.ProcessingTimes
+    val userId: String,
+    val conversationId: String,
+    val premium: Boolean,
+    val expiresAt: String?,
+    val processingTimes: MainCallSegment.ProcessingTimes,
+    val segments: List<MainCallSegment>
 )
 
 internal data class MainCallSegment(
@@ -213,4 +235,33 @@ internal data class MainMinVersionResponse(
 
 internal data class MainMinVersionMeta(
     val minVersion: String
+)
+
+data class MainPaymentEnrollRequest(
+    val platform: String,
+    val productId: String? = null,
+    val purchaseToken: String? = null,
+    val receiptData: String? = null
+)
+
+data class MainPaymentEnrollResponse(
+    val userId: String,
+    val premium: Boolean,
+    val expiresAt: String,
+    val platform: String
+)
+
+internal data class MainPremiumInfoResponse(
+    val userId: String,
+    val premium: Boolean,
+    val expiresAt: String? // 유효한 구독 없을 경우 null
+)
+
+internal data class MainCancellationReasonRequest(
+    val platform: String,
+    val reason: String
+)
+
+internal data class MainCancellationReasonResponse(
+    val message: String
 )
