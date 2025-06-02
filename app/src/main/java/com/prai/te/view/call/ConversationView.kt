@@ -33,7 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -270,9 +269,9 @@ private fun AiChatItem(message: MainConversation = MockConversation) {
     ) {
         Text(
             text = message.text,
-            fontSize = 16.sp,
+            fontSize = 16.textDp,
             fontFamily = MainFont.Pretendard,
-            lineHeight = 22.4.sp,
+            lineHeight = 22.textDp,
             fontWeight = FontWeight(400),
             color = Color(0xFFD2D2D2),
 
@@ -293,9 +292,9 @@ private fun AiChatItem(message: MainConversation = MockConversation) {
         )
         Text(
             text = MainTimeUtil.isoToTimeCustom(message.timestamp),
-            fontSize = 12.sp,
+            fontSize = 12.textDp,
             fontFamily = MainFont.Pretendard,
-            lineHeight = 16.8.sp,
+            lineHeight = 16.textDp,
             fontWeight = FontWeight(400),
             color = Color(0xFF868686),
             textAlign = TextAlign.Center,
@@ -315,8 +314,8 @@ private fun UserChatItem(message: MainConversation = MockConversation) {
     ) {
         Text(
             text = MainTimeUtil.isoToTimeCustom(message.timestamp),
-            fontSize = 12.sp,
-            lineHeight = 16.8.sp,
+            fontSize = 12.textDp,
+            lineHeight = 16.textDp,
             fontFamily = MainFont.Pretendard,
             fontWeight = FontWeight(400),
             color = Color(0xFF868686),
@@ -325,9 +324,9 @@ private fun UserChatItem(message: MainConversation = MockConversation) {
         )
         Text(
             text = message.text.trim(),
-            fontSize = 16.sp,
+            fontSize = 16.textDp,
             fontFamily = MainFont.Pretendard,
-            lineHeight = 22.4.sp,
+            lineHeight = 22.textDp,
             fontWeight = FontWeight(400),
             color = Color(0xFF000000),
             textAlign = TextAlign.Start,

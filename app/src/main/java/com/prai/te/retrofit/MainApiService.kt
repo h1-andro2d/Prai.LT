@@ -93,6 +93,7 @@ internal interface MainApiService {
 internal data class MainFirstCallRequest(
     val userId: String,
     val voice: String? = null,
+    val mode: String = "teacher",
     val ttsOption: String? = null
 )
 
@@ -110,6 +111,7 @@ internal data class MainCallRequest(
     val format: String = "m4a",
     val voice: String? = null,
     val ttsOption: String? = null,
+    val mode: String = "teacher",
     val conversationId: String? = null
 )
 

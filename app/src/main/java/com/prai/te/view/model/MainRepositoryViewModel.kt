@@ -32,10 +32,6 @@ internal class MainRepositoryViewModel(
     var userId: String? = null
     var email: String? = null
 
-    private var voiceSpeedCache = selectedVoiceSpeed.value
-    private var voiceSettingCache = selectedVoiceSettingItem.value
-    private var vibeSettingCache = selectedVibeSettingItem.value
-
     private var birthDateCache = selectedBirthDateMills.value
     var ageCache = ageText.value
     var genderCache = selectedGender.value
@@ -55,36 +51,6 @@ internal class MainRepositoryViewModel(
         selectedGender.value = UserGender.entries.find { it.code == info.gender }
         email = info.email
         userId = info.userId
-    }
-
-    fun makeAiSettingCache() {
-        voiceSpeedCache = selectedVoiceSpeed.value
-        voiceSettingCache = selectedVoiceSettingItem.value
-        vibeSettingCache = selectedVibeSettingItem.value
-    }
-
-    fun saveCurrentAiSetting() {
-        repository.selectedVoiceSpeed = selectedVoiceSpeed.value
-        repository.selectedVoiceSettingItem = selectedVoiceSettingItem.value
-        repository.selectedVibeSettingItem = selectedVibeSettingItem.value
-
-        Firebase.analytics.logEvent(
-            "voice_settings_saved",
-            bundleOf(
-                "voice_type" to selectedVoiceSettingItem.value.code,
-                "tone" to selectedVibeSettingItem.value.code,
-                "speed" to selectedVoiceSpeed.value,
-            )
-        )
-    }
-
-    fun rollbackAiSetting() {
-        viewModelScope.launch {
-            delay(300L)
-            selectedVoiceSpeed.value = voiceSpeedCache
-            selectedVoiceSettingItem.value = voiceSettingCache
-            selectedVibeSettingItem.value = vibeSettingCache
-        }
     }
 
     fun makeProfileSettingCache() {

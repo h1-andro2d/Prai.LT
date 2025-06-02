@@ -49,9 +49,6 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="ServerLoadingView">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="BillingView2">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
@@ -59,6 +56,9 @@
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="SomethingOutView">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="VoiceSettingView">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

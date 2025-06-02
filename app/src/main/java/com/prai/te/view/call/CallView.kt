@@ -334,7 +334,7 @@ internal fun CallView(model: MainViewModel = viewModel()) {
         exit = slideOutVertically(targetOffsetY = { it }),
         modifier = Modifier.fillMaxSize()
     ) {
-        AiSettingView()
+        VoiceSettingView()
     }
     FadeView(
         visible = isChatListVisible.value,
@@ -401,7 +401,7 @@ private fun NotificationText(modifier: Modifier, model: MainViewModel = viewMode
 private fun GuideText() {
     Text(
         text = "언제든 편하게 연락하세요!",
-        fontSize = 16.sp,
+        fontSize = 16.textDp,
         fontFamily = MainFont.Pretendard,
         color = Color(0xFFFFFFFF)
     )

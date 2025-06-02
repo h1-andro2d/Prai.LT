@@ -33,6 +33,7 @@ import com.prai.te.model.MainCallState
 import com.prai.te.model.MainEvent
 import com.prai.te.model.MainIntroState
 import com.prai.te.model.MainPremiumPlan
+import com.prai.te.model.VoiceAccess
 import com.prai.te.permission.MainPermission
 import com.prai.te.permission.MainPermissionHandler
 import com.prai.te.retrofit.MainCallSegment
@@ -44,6 +45,7 @@ import com.prai.te.view.model.BillingMessage
 import com.prai.te.view.model.CallSegmentItem
 import com.prai.te.view.model.MainRepositoryViewModel
 import com.prai.te.view.model.MainViewModel
+import com.prai.te.view.model.MainVoiceViewModel
 import com.prai.te.view.model.UserGender
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,6 +60,7 @@ class MainActivity : ComponentActivity() {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val viewModel: MainViewModel by viewModels()
     private val repository: MainRepositoryViewModel by viewModels()
+    private val voiceViewModel: MainVoiceViewModel by viewModels()
     private val authManager: MainAuthManager by lazy { MainAuthManager(scope) }
     private val recorder: MainRecorder by lazy { MainRecorder(scope) }
     private val retrofit: MainRetrofit by lazy { MainRetrofit(scope, authManager) }
@@ -382,11 +385,11 @@ class MainActivity : ComponentActivity() {
         val userId = repository.userId
         if (token != null && userId != null) {
             retrofit.sendFirstCallRequest(
-                token,
-                userId,
-                repository.selectedVoiceSettingItem.value.code,
-                repository.selectedVibeSettingItem.value.code,
-                repository.selectedVoiceSpeed.value
+                authToken = token,
+                userId = userId,
+                voice = voiceViewModel.getVoiceValue(),
+                ttsOption = voiceViewModel.getTtsOption(),
+                mode = voiceViewModel.getModeValue()
             )
         } else {
             withContext(Dispatchers.Main) {
@@ -607,12 +610,12 @@ class MainActivity : ComponentActivity() {
             val token = authManager.getAuthToken()
             if (token != null) {
                 retrofit.sendCallRequest(
-                    token,
-                    path,
-                    repository.selectedVoiceSettingItem.value.code,
-                    repository.selectedVibeSettingItem.value.code,
-                    repository.selectedVoiceSpeed.value,
-                    state.conversationId
+                    token = token,
+                    path = path,
+                    voice = voiceViewModel.getVoiceValue(),
+                    ttsOption = voiceViewModel.getTtsOption(),
+                    mode = voiceViewModel.getModeValue(),
+                    id = state.conversationId
                 )
             } else {
                 viewModel.callResponseWaiting.value = false // handle Error case: token error

@@ -26,13 +26,14 @@ internal class MainRetrofit(private val scope: CoroutineScope, val authManager: 
         authToken: String,
         userId: String,
         voice: String,
-        vibe: String,
-        speed: Float
+        ttsOption: String,
+        mode: String
     ) {
         val request = MainFirstCallRequest(
             userId = userId,
             voice = voice,
-            ttsOption = createTtsOption(vibe, speed)
+            mode = mode,
+            ttsOption = ttsOption
         )
         MainLogger.Retrofit.log("sendFirstCallRequest: request: $request")
         scope.launch {
@@ -51,15 +52,16 @@ internal class MainRetrofit(private val scope: CoroutineScope, val authManager: 
         token: String,
         path: String,
         voice: String,
-        vibe: String,
-        speed: Float,
+        ttsOption: String,
+        mode: String,
         id: String
     ) {
         val encoded = MainCodec.encodeFilePathToBase64(path)
         val request = MainCallRequest(
             audio = encoded,
             voice = voice,
-            ttsOption = createTtsOption(vibe, speed),
+            ttsOption = ttsOption,
+            mode = mode,
             conversationId = id
         )
         MainLogger.Retrofit.log("sendCallRequest: request: $request")
@@ -387,7 +389,6 @@ internal class MainRetrofit(private val scope: CoroutineScope, val authManager: 
         val speedPercent = minSpeed + (maxSpeed - minSpeed) * speed
         return "Speak at ${speedPercent}% of normal speed. Use a $vibe Accent."
     }
-
 
     sealed interface Event {
         data class CallResponse(val response: MainCallResponse) : Event
